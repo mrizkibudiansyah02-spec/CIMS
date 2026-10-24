@@ -1,0 +1,2280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>CIMS — Continuous Improvement Management System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --navy: #0f2044;
+  --navy-light: #1a3260;
+  --navy-mid: #243d6e;
+  --blue: #2563eb;
+  --blue-light: #3b82f6;
+  --blue-pale: #dbeafe;
+  --white: #ffffff;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+  --green: #16a34a;
+  --green-light: #dcfce7;
+  --yellow: #d97706;
+  --yellow-light: #fef3c7;
+  --red: #dc2626;
+  --red-light: #fee2e2;
+  --purple: #7c3aed;
+  --purple-light: #ede9fe;
+  --teal: #0d9488;
+  --teal-light: #ccfbf1;
+  --sidebar-w: 240px;
+  --header-h: 60px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--gray-100);color:var(--gray-800);font-size:14px}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:inherit;font-size:14px}
+input,select,textarea{font-family:inherit;font-size:14px}
+
+/* Layout */
+#app{display:flex;height:100vh;overflow:hidden}
+#sidebar{width:var(--sidebar-w);background:var(--white);border-right:1px solid var(--gray-200);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;z-index:100}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#header{height:var(--header-h);background:var(--white);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0;z-index:50}
+#content{flex:1;overflow-y:auto;padding:24px}
+
+/* Sidebar */
+.sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--gray-200)}
+.sidebar-logo-title{color:var(--white);font-size:16px;font-weight:700;letter-spacing:-0.3px}
+.sidebar-logo-sub{color:rgba(255,255,255,0.45);font-size:10px;margin-top:2px;text-transform:uppercase;letter-spacing:1px}
+.sidebar-section{padding:16px 12px 4px;color:var(--gray-400);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;margin:1px 8px;border-radius:7px;color:var(--gray-600);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s}
+.nav-item:hover{background:var(--gray-100);color:var(--gray-800)}
+.nav-item.active{background:var(--blue);color:var(--white)}
+.nav-item .icon{width:16px;text-align:center;flex-shrink:0;font-size:14px}
+.sidebar-bottom{margin-top:auto;padding:12px 8px;border-top:1px solid var(--gray-200)}
+
+/* Header */
+.header-breadcrumb{display:flex;align-items:center;gap:6px;color:var(--gray-500);font-size:13px;flex:1}
+.header-breadcrumb strong{color:var(--gray-800)}
+.header-breadcrumb span{color:var(--gray-400)}
+.header-actions{display:flex;align-items:center;gap:8px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--blue);color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+.notif-badge{position:relative;cursor:pointer}
+.notif-badge::after{content:'3';position:absolute;top:-4px;right:-4px;background:var(--red);color:white;border-radius:10px;font-size:9px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;font-weight:500;border:none;transition:all 0.15s;white-space:nowrap}
+.btn-primary{background:var(--blue);color:white}
+.btn-primary:hover{background:#1d4ed8}
+.btn-secondary{background:var(--white);color:var(--gray-700);border:1px solid var(--gray-200)}
+.btn-secondary:hover{background:var(--gray-50);border-color:var(--gray-300)}
+.btn-danger{background:var(--red);color:white}
+.btn-danger:hover{background:#b91c1c}
+.btn-ghost{background:transparent;color:var(--gray-600);border:none}
+.btn-ghost:hover{background:var(--gray-100)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px;border-radius:5px}
+
+/* Cards */
+.card{background:var(--white);border-radius:10px;border:1px solid var(--gray-200)}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:600;color:var(--gray-800)}
+.card-body{padding:20px}
+
+/* Stat cards */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:18px 20px}
+.stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-500);margin-bottom:8px}
+.stat-value{font-size:28px;font-weight:700;color:var(--gray-900);letter-spacing:-1px;line-height:1}
+.stat-sub{font-size:12px;color:var(--gray-500);margin-top:6px}
+.stat-delta-up{color:var(--green)}
+.stat-delta-down{color:var(--red)}
+.stat-icon{float:right;font-size:20px;opacity:0.2;margin-top:-4px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-blue{background:var(--blue-pale);color:#1d4ed8}
+.badge-green{background:var(--green-light);color:#15803d}
+.badge-yellow{background:var(--yellow-light);color:#92400e}
+.badge-red{background:var(--red-light);color:#b91c1c}
+.badge-purple{background:var(--purple-light);color:#6d28d9}
+.badge-gray{background:var(--gray-100);color:var(--gray-600)}
+.badge-teal{background:var(--teal-light);color:#0f766e}
+
+/* Tables */
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--gray-200)}
+table{width:100%;border-collapse:collapse;background:white}
+thead th{background:var(--gray-50);padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-500);border-bottom:1px solid var(--gray-200)}
+tbody td{padding:12px 14px;border-bottom:1px solid var(--gray-100);font-size:13px;color:var(--gray-700);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--gray-50)}
+
+/* Forms */
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+.form-control{width:100%;padding:8px 12px;border:1px solid var(--gray-200);border-radius:7px;background:white;color:var(--gray-800);transition:border-color 0.15s}
+.form-control:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,0.08)}
+.form-control::placeholder{color:var(--gray-400)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+/* Search bar */
+.search-bar{display:flex;align-items:center;gap:8px;background:white;border:1px solid var(--gray-200);border-radius:7px;padding:6px 12px;flex:1;max-width:320px}
+.search-bar input{border:none;outline:none;flex:1;font-size:13px;color:var(--gray-700)}
+.search-bar input::placeholder{color:var(--gray-400)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:white;border-radius:12px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px rgba(0,0,0,0.2)}
+.modal-lg{max-width:780px}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700;color:var(--gray-900)}
+.modal-body{padding:24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--gray-100);display:flex;justify-content:flex-end;gap:10px}
+.modal-close{background:none;border:none;font-size:18px;color:var(--gray-400);cursor:pointer;padding:4px}
+.modal-close:hover{color:var(--gray-700)}
+
+/* Page header */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.page-title{font-size:20px;font-weight:700;color:var(--gray-900);letter-spacing:-0.3px}
+.page-sub{font-size:13px;color:var(--gray-500);margin-top:2px}
+
+/* Tabs */
+.tab-bar{display:flex;gap:0;border-bottom:2px solid var(--gray-200);margin-bottom:24px}
+.tab-item{padding:10px 18px;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s}
+.tab-item:hover{color:var(--gray-700)}
+.tab-item.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+
+/* Progress */
+.progress-bar{height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:var(--blue);transition:width 0.3s}
+.progress-fill.green{background:var(--green)}
+.progress-fill.yellow{background:var(--yellow)}
+.progress-fill.red{background:var(--red)}
+
+/* Timeline/steps */
+.steps{display:flex;gap:0;margin-bottom:24px}
+.step{flex:1;text-align:center;position:relative}
+.step::after{content:'';position:absolute;top:16px;left:50%;width:100%;height:2px;background:var(--gray-200);z-index:0}
+.step:last-child::after{display:none}
+.step-dot{width:32px;height:32px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;position:relative;z-index:1}
+.step-dot.done{background:var(--green);color:white}
+.step-dot.active{background:var(--blue);color:white}
+.step-dot.pending{background:var(--gray-200);color:var(--gray-500)}
+.step-label{font-size:11px;font-weight:600;color:var(--gray-500)}
+.step-label.active{color:var(--blue)}
+
+/* Alert */
+.alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
+.alert-info{background:var(--blue-pale);color:#1e40af;border:1px solid #bfdbfe}
+.alert-success{background:var(--green-light);color:#15803d;border:1px solid #bbf7d0}
+.alert-warning{background:var(--yellow-light);color:#92400e;border:1px solid #fde68a}
+.alert-error{background:var(--red-light);color:#b91c1c;border:1px solid #fecaca}
+
+/* Charts */
+.chart-container{position:relative;width:100%;height:260px}
+
+/* Fishbone */
+.fishbone{background:var(--gray-50);border-radius:10px;padding:20px;border:1px solid var(--gray-200)}
+.fishbone-spine{display:flex;align-items:center;gap:0;margin:40px 0}
+.fishbone-line{flex:1;height:3px;background:var(--gray-400)}
+.fishbone-head{background:var(--red);color:white;padding:10px 18px;border-radius:8px;font-weight:600;font-size:13px;min-width:130px;text-align:center}
+.fishbone-bones{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.fishbone-bone{background:white;border:1px solid var(--gray-200);border-radius:8px;padding:14px}
+.fishbone-bone-title{font-size:12px;font-weight:700;color:var(--gray-700);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px}
+.fishbone-cause{font-size:12px;color:var(--gray-600);padding:4px 0;border-bottom:1px solid var(--gray-100)}
+.fishbone-cause:last-child{border-bottom:none}
+
+/* 5-Why */
+.why-row{display:flex;align-items:flex-start;gap:12px;padding:14px;background:white;border:1px solid var(--gray-200);border-radius:8px;margin-bottom:10px}
+.why-num{width:28px;height:28px;border-radius:50%;background:var(--navy);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.why-content{flex:1}
+.why-q{font-size:12px;font-weight:600;color:var(--gray-500);margin-bottom:4px}
+.why-a{font-size:13px;color:var(--gray-800)}
+
+/* PDCA */
+.pdca-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pdca-card{border-radius:10px;padding:18px;border:2px solid}
+.pdca-p{background:#eff6ff;border-color:#bfdbfe}
+.pdca-d{background:#f0fdf4;border-color:#bbf7d0}
+.pdca-c{background:#fffbeb;border-color:#fde68a}
+.pdca-a{background:#fdf4ff;border-color:#e9d5ff}
+.pdca-label{font-size:22px;font-weight:800;margin-bottom:4px}
+.pdca-p .pdca-label{color:#1d4ed8}
+.pdca-d .pdca-label{color:#15803d}
+.pdca-c .pdca-label{color:#92400e}
+.pdca-a .pdca-label{color:#6d28d9}
+.pdca-title{font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px}
+
+/* Pareto */
+.pareto-table{width:100%;border-collapse:collapse;font-size:13px}
+.pareto-table th{padding:8px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--gray-500)}
+.pareto-table td{padding:9px 12px;border-bottom:1px solid var(--gray-100)}
+.pareto-bar-cell{width:180px}
+.pareto-bar-bg{background:var(--gray-100);border-radius:3px;height:8px;overflow:hidden}
+.pareto-bar-fill{height:100%;border-radius:3px;background:var(--blue)}
+.cum-80{color:var(--green);font-weight:700}
+
+/* Import steps */
+.import-zone{border:2px dashed var(--gray-300);border-radius:10px;padding:40px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--gray-50)}
+.import-zone:hover{border-color:var(--blue);background:var(--blue-pale)}
+.import-zone-icon{font-size:40px;margin-bottom:12px;opacity:0.5}
+.import-zone p{color:var(--gray-500);font-size:13px}
+
+/* Notification panel */
+.notif-panel{position:fixed;top:60px;right:16px;width:320px;background:white;border-radius:10px;border:1px solid var(--gray-200);box-shadow:0 10px 30px rgba(0,0,0,0.12);z-index:500;display:none}
+.notif-panel.open{display:block}
+.notif-item{padding:12px 16px;border-bottom:1px solid var(--gray-100);cursor:pointer}
+.notif-item:hover{background:var(--gray-50)}
+.notif-item:last-child{border-bottom:none}
+.notif-item-title{font-size:13px;font-weight:600;color:var(--gray-800)}
+.notif-item-sub{font-size:12px;color:var(--gray-500);margin-top:2px}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:4px}
+
+/* Tooltip */
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:var(--gray-800);color:white;font-size:11px;padding:4px 8px;border-radius:5px;white-space:nowrap;pointer-events:none;z-index:999}
+
+/* Responsive */
+@media(max-width:900px){#sidebar{width:58px}.nav-item span{display:none}.sidebar-section{display:none}.sidebar-logo-sub{display:none}.sidebar-logo-title{font-size:0}}
+@media(max-width:600px){.form-row,.form-row-3{grid-template-columns:1fr}.stat-grid{grid-template-columns:1fr 1fr}.pdca-grid{grid-template-columns:1fr}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:10px}
+
+/* Demo label */
+.demo-label{display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+
+/* Empty state */
+.empty-state{text-align:center;padding:60px 20px;color:var(--gray-400)}
+.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:0.4}
+.empty-state h3{font-size:16px;font-weight:600;color:var(--gray-500);margin-bottom:6px}
+.empty-state p{font-size:13px}
+
+/* Audit log */
+.audit-row{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-100)}
+.audit-row:last-child{border-bottom:none}
+.audit-icon{width:32px;height:32px;border-radius:8px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.audit-content{flex:1}
+.audit-action{font-size:13px;font-weight:600;color:var(--gray-800)}
+.audit-meta{font-size:12px;color:var(--gray-500);margin-top:2px}
+
+/* KPI */
+.kpi-gauge{text-align:center;padding:16px}
+.kpi-value{font-size:36px;font-weight:800;letter-spacing:-2px}
+.kpi-target{font-size:12px;color:var(--gray-500);margin-top:4px}
+.kpi-status-bar{height:8px;border-radius:4px;background:var(--gray-100);margin:10px 0;overflow:hidden}
+
+/* Benefit card */
+.benefit-metric{background:var(--gray-50);border-radius:8px;padding:14px;text-align:center}
+.benefit-metric-label{font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.benefit-metric-value{font-size:22px;font-weight:700;color:var(--gray-900)}
+
+/* Document card */
+.doc-card{background:white;border:1px solid var(--gray-200);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:box-shadow 0.15s;cursor:pointer}
+.doc-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.08)}
+.doc-icon{font-size:32px}
+
+/* Utility */
+.flex{display:flex}.flex-1{flex:1}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}.mb-2{margin-bottom:8px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mt-4{margin-top:16px}.text-sm{font-size:12px}.text-xs{font-size:11px}.text-gray{color:var(--gray-500)}.font-semibold{font-weight:600}.font-bold{font-weight:700}.text-right{text-align:right}.w-full{width:100%}.hidden{display:none!important}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-logo" style="padding:14px 16px 12px">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAEsCAYAAAAvh6FGAAAACXBIWXMAABYlAAAWJQFJUiTwAAAOS0lEQVR4nO3dPW8U5xqA4ddHkU7hJi5CnaAURyJK8hdMTUMJorMUflOQ6KKkdJMa/wVAQUoREWpO4dO4SLWnQCtsWO/HzPv5zHVJaZIwM94xc88zM7t7tFqtEgAQy79abwAAkJ/AA0BAAg8AAQk8AAQk8AAQkMADQEACDwABCTwABCTwABCQwANAQAIPAAEJPAAEJPAAEJDAA0BAAg8AAQk8AAQk8AAQkMADQEACDwABCTwABCTwABCQwANAQAIPAAEJPAAEJPAAEJDAA0BAAg8AAQk8AAQk8AAQkMADQEACDwABCTwABCTwABCQwANAQAIPAAEJPAAEJPAAEJDAA0BAAg8AAQk8AAQk8AAQkMADQEACDwABCTwABCTwABCQwANAQAIPAAEJPAAEJPAAEJDAA0BAAg8AAX3RegOI7/mdu6vW20C/zq8u0+9Xl0ettwOiMcEDzZxfXbbeBAhrkRP8g+OTrRPlw+OTWpsytLP3b01dTCbuUFb4wO+K+afEHcoTdygvZOAPjXpKwg61iDvUESbwU6KekrBDTeIO9Qwf+KlhT0ncoSZxh7qGDfycsKck7lCTuEN9wwV+bthTEneoSdyhjaHeBy/uMBZxh3aGmOBzhD0lcYeaxB3a6n6CF3cYj7hDe90G/tuvv/lZ3GE84g596PIS/YPjk9V/Wm8EcDBxh350N8HnmtrXTO9Qh7hDX7oKvLjDmMQd+tNN4L/9+pufW28DcDhxhz51E/j//Pd/P+VcnukdyhN36FcXgc99aR4oT9yhb80DXyLupncoS9yhf00D7747jEfcYQxNA5/7vntKpncoSdxhHM0+6MZ9d+Y4e//2qPU2LNG5v7cwjOb34HMyvQPAB00m+B6m9yVNgM/v3G3+egNQV5efRV/KkqIOwLKFCfy2y/PCDsDSVA98zcvzwg7AUoV6yO46cQdgyUIE/tPL8+IOwNJVvURf+vK8sAPAByEmeADgpjCBN70DwEchAi/uAHBTiMADADcNH3ifPw8Anxs+8C7PA8Dnhg88APA5gQeAgAQeAAISeAAISOABICCBB4CABB4AAhJ4AAhI4AEgIIEHgIAEHgACEngACEjgASAggQeAgAQeAAISeAAISOABICCBD+75nburEss9e//2qMRyAchD4AEgIIEPrNT0DkD/BD4ocQdYNoEPSNwBEPhgxB2AlFL6ovUGkEfNsHuCHqB/JvgATO0AfMoEPyhRB2AbgR9M67C7PA8wBoHvVOuQAzC24QMvhPWY3gHG4SE7AAho6MA/PD5pvQmLYXoHGMuwgRf3esQdYDxDBl7cAWC74QIv7nWZ3gHGNFTgxb0ucQcY1zBvkxP3usQ9rwfHJ6uU/B4D9QwxwTso1iXu5ZxfXbbehFn8XYRxdB94B5S6xL08kQdq6DrwDiR1iXs9Ig+U1m3gHUDqEvf6RB4oqcvAO3DUc/b+7ZG4tyPyQCndBd4Box5h74PIAyV0FXgHijpM7f0ReSC3bgLvAFGHsPdL5IGcugi8A0N5pvYxiDyQS/NPsnNAKEfQx3R+dTn034uHxyfDn6hABE0n+JEPYj0zrY9v9ED6uw3tNZvgHQDyEvR4TPLAHE0CP/JBqwdivhwiD0xVNfC/X10KExxI5IEpuniKHthu9ECOfIICoxJ4GITIA4cQeBiIyAP7EngYjMgD+xB4GJDIA7sIPAxK5IFtmn9ULTDNn199+ezs3dunrbdjjrPWGwCBmeABICCBB4CAql6iv3fvu9X3P/xYc5VD++3XX3zyHwCTVL8H//rVyyTy+3n0+Mlq078XfgB2afKQncjPcz38Yg/AJs2eohf5PMQegE2avk1O5PMSewDWmj9F//rVy9abENKjx09Wt93DByC+5oFPSeRLEnqAZeoi8CmJfGkiD7As3QQ+JZEvzTQPsBxdBT4lka9B5AHi6y7wKYl8DaZ5gNi6DHxKIl+LyAPE1G3gUxL5WkQeIJ6uA5+SyNci8gCxdB/4lES+FpEHiGOIwKck8rWIPEAMwwQ+JZGvReQBxjdU4FMS+VpEHmBswwU+JZGvReQBxtX062Ln8FWzkN/p6f1ZJ3UXFy+yf03xPts0db23LfvQ5e3axtuWN/f1nrLObab+HFO12Ldzlllj2TkNG/iURL6GR4+frHy3PPu6fuAreRC97f/NdXA9Pb2/6ulAXdKU1zmlea91y327XmaJE4feDHmJnrpcqmeK09P7qykHw6l/bu6f3bSsHMvp2ZyfceR9uxRDT/AppRR5uhRWIjhkWsoZ56VM4FO0eJ0j7NvRTjBM8B377ddfjtb/tN4WJxvMsc+BMffBM8fyRjugt2Df9kvgB9FT7CG3ng+2PW/bFCV+nm3LjPb6jUTgB9Qq9KZ4RiMuN0V6PWpP8SO+dsPfg1+y33795Uh0qWXXfc9dB8C59043/dlaB91W9317Wee+l+Gnbm/LfRuZCX5wtad5JxTcpuTbjm5bds0ALiE4uV/nEfZti2cIahH4INybJ6pdB/q5VxaWYu6H2JQIrn1blsAHIvJQ1tKDEvWth1EfEnQPPhj35Ymkx6As/T32uX72Jb+GtZjgAyo9yTuBYJORJx3Y9Ps7+u+0wAflcj217PsRoiUnttrT4OgH/pGY9KdziR7Yi6jdVONS/ZTXXBCnu75PI/y+m+ADM8XTC9GB+gQeKGrUuO+z3RGmPG6K9K11Ag8UFeVgCaMR+OBcpqcHo0beFB9T7o9M7pXAA2wx0gEdrvMUPbCXbaEr/WUkS+X1Kufi4sXRoVdfRtsfJnhgtouLF0ctD36lL5OPdmCPxC2Q6QQeyCZyCCP/bEt1yD4dcf+7RA90y2X9/mybqA/ZV/ZteSZ4gD0tPUgRL5fvs09H3e8CD2TTIgARo1PCiN+t3uM2jUTggSxKHYznfld37ulr1GluH7W/F72XfbttOSPvb/fggb2UCvg+b1e6/t+nvL0pt1rbMGcdU8O0XuehX7qyaX0j7duRQ34bEzwwlEMCEPGgPcehD8HVjm3rE7doBB6oItpl0BG3uZQW+9brv5vAA10Y8V75iJFp8TqPuG8jEHiguH0PyDUemqLN62zf1ifwQDFTPsJ27gG8dgBGDc7cjxee8mdH27ej8xQ9kF2uA/koD9T18GT/VIdu+9L27ciOVqt6v5P37n2XfWVv3vxhx+/w6PGT7K/7Id8z//zO3ezrP3v/dqj9/uD4JPtr8OdXXz77693fT3MvF4jBJXoACEjgASAggQeAgAQeAAISeAAISOABICCBB4CABB4AAho+8CU+PAcARjd84AGAzwk8AAQU4stmHj1+sjrks9GBj2p8ScqnXxYyd51Tv3xk23pLLHPusmuvc9dy5/4cJV5/bhci8MCyXA9FqzAccpKy/n/nbOuhJ0U51pnTqN+2N7Iwl+hLfGMa0L/T0/urmvGYs76pf3bOz5fztRHpsVQNfKmvdn396mVKSeRhyWrEJ9c6pkz/c9fXMs5ODNoIM8GviTwsV8mQ5F72PsvrMYw9bhObhQt8SiIPjGFbLEuEtEWcnRC0Uz3w/1xdPauxHpGHZYoSxlJyXfLPsS2UVf0p+r/e/f303r3vfsq93NevXqbvf/jxxr/z9jnYbZ+nrGu+vWnX8nqNy6btnvMwXu11ltDTtixRyEv01z16/GRlmoc4ar/ta857zueePG1b35x15iDe/WsS+FJP028j9BBHL+/tTmn3trTY1h6ugjgBaC/UBL9+u9w2Qg+MrKeTGxHvW7NPsnvz5o+jlt8Edz3y7tMDJfUU5RqEvw8+qjZtfuJe9KFfAtKP09P7q6WdwIyiaeBLTPGbnqafwmX8vj2/c9f+oTlh+5yTr340n+D/ubp69u/j4+xvmwNiEY5+meL71DzwJd4Xn2uKh1weHp+k86vL1psxhFZfJct8TsL60sVT9C3eNge1PTw+ab0JUIy496eLwKeUP/L7vGUOahP5skzv/bJv6usm8CnV+5x6aEnkyxCQ8rzGY+kq8H+9+/tpzsib4umVyOez7WNb6YP900ZXgU/pQ+RbbwPUIPKMSKzH0V3gU/pwPz7XJG+Kp2ci/7n1RL7vZN7y4S4Plu3mhKCdLgOf0odJPteDdyJPz0R+O4Hoj30yhubvg9+l9WfWQw3eJz9P7x+0smvS73nb54j6c42i2wn+uhyTvCme3pnkbycUH/VyW8A+6d8QgU8pz315kad3Ij9dq/D1Etzrerhi4ASgvWECn1Ke+/IiT+9EfrNWwZj7oF+JE4Da67uNiPet+3vwm6wjP/XevM+qp3fuyU/T8l78OqwXFy+ODonspu3dZxnX//uh68xJ5Ps11AT/qZxvp4PemOQ/1/MUv9YitHNPKIhp6MCn9PGy/aGhf/3qpcv1dE/kD9fjPfHbbIutEDPX8IFfW4f+0Hv0Ik/vRP6mEab4XMtrsU7iCBP469ah3zf2Ik/vRP4wpab4XIE8ZDkt1kkMIQN/3b6xd8me3on8Ry1jNXfdU/78nHX6Mp7lGvIp+qk+jfymp/A9YU/PPF3/0a4nx0s+Ub9ebs2H2w5dp6hztFoN8zwKg3p+565fsszOry7Tn199+cy3LwK3EXgACCj8PXgAWCKBB4CABB4AAhJ4AAhI4AEgIIEHgIAEHgACEngACEjgASAggQeAgAQeAAISeAAISOABICCBB4CABB4AAhJ4AAhI4AEgIIEHgIAEHgACEngACEjgASAggQeAgAQeAAISeAAISOABICCBB4CABB4AAhJ4AAhI4AEgIIEHgIAEHgACEngACEjgASAggQeAgAQeAAISeAAISOABICCBB4CABB4AAhJ4AAhI4AEgIIEHgIAEHgACEngACEjgASAggQeAgAQeAAISeAAISOABICCBB4CABB4AAvo/d51asiW5/JcAAAAASUVORK5CYII=" alt="Bonecom Tricom" style="width:140px;max-width:100%;display:block;"/>
+    </div>
+    <div style="padding:10px 16px 14px;border-bottom:1px solid var(--gray-200);text-align:center">
+      <div style="font-size:11px;font-weight:700;color:var(--navy);letter-spacing:1px;text-transform:uppercase;line-height:1.5">
+        DEPT.ROBOTIK
+      </div>
+    </div>
+
+    <div class="sidebar-section">Main</div>
+    <div class="nav-item active" onclick="navigate('dashboard')"><span class="icon">📊</span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="navigate('projects')"><span class="icon">📁</span><span>Projects</span></div>
+    <div class="nav-item" onclick="navigate('ideas')"><span class="icon">💡</span><span>Ideas Register</span></div>
+    <div class="nav-item" onclick="navigate('actions')"><span class="icon">✅</span><span>Action Tracker</span></div>
+
+    <div class="sidebar-section">Analysis</div>
+    <div class="nav-item" onclick="navigate('kpi')"><span class="icon">📈</span><span>KPI Measurement</span></div>
+    <div class="nav-item" onclick="navigate('import')"><span class="icon">📥</span><span>Import Center</span></div>
+    <div class="nav-item" onclick="navigate('analysis')"><span class="icon">🔬</span><span>Data Analysis</span></div>
+
+    <div class="sidebar-section">Tools</div>
+    <div class="nav-item" onclick="navigate('problemsolving')"><span class="icon">🧩</span><span>Problem Solving</span></div>
+    <div class="nav-item" onclick="navigate('benefits')"><span class="icon">💰</span><span>Benefits & Saving</span></div>
+    <div class="nav-item" onclick="navigate('documents')"><span class="icon">📄</span><span>Document Center</span></div>
+
+    <div class="sidebar-section">Admin</div>
+    <div class="nav-item" onclick="navigate('auditlog')"><span class="icon">🗂️</span><span>Audit Log</span></div>
+    <div class="nav-item" onclick="navigate('users')"><span class="icon">👥</span><span>Users & Roles</span></div>
+    <div class="nav-item" onclick="navigate('settings')"><span class="icon">⚙️</span><span>Settings</span></div>
+
+    <div class="sidebar-bottom">
+      <div class="nav-item" style="padding:8px 12px">
+        <span class="icon">👤</span>
+        <span style="font-size:12px;color:var(--gray-600)">Ahmad Rizky · Admin</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- HEADER -->
+    <header id="header" style="padding:0 16px">
+      <div class="header-breadcrumb" id="breadcrumb">
+        <span>CIMS</span><span>›</span><strong>Dashboard</strong>
+      </div>
+      <span class="demo-label">⚠ Demo Data</span>
+      <div class="header-actions">
+        <div id="realtimeClock" style="display:flex;flex-direction:column;align-items:flex-end;margin-right:8px;line-height:1.2">
+          <span id="clockTime" style="font-size:15px;font-weight:700;color:var(--gray-800);font-variant-numeric:tabular-nums;letter-spacing:-0.3px"></span>
+          <span id="clockDate" style="font-size:10px;color:var(--gray-500);font-weight:500"></span>
+        </div>
+        <div style="width:1px;height:28px;background:var(--gray-200);margin-right:4px"></div>
+        <button class="btn btn-ghost" style="font-size:20px;padding:4px 8px" onclick="toggleNotif()" title="Notifications">
+          <span class="notif-badge">🔔</span>
+        </button>
+        <div class="avatar">AR</div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main id="content"></main>
+  </div>
+</div>
+
+<!-- Notification Panel -->
+<div class="notif-panel" id="notifPanel">
+  <div style="padding:14px 16px;border-bottom:1px solid var(--gray-100);font-weight:700;font-size:14px;display:flex;justify-content:space-between">
+    Notifications
+    <span class="badge badge-blue">3 new</span>
+  </div>
+  <div class="notif-item">
+    <div style="display:flex;gap:10px">
+      <div class="notif-dot"></div>
+      <div>
+        <div class="notif-item-title">Project PRJ-2024-003 needs approval</div>
+        <div class="notif-item-sub">Assigned to you · 2 hours ago</div>
+      </div>
+    </div>
+  </div>
+  <div class="notif-item">
+    <div style="display:flex;gap:10px">
+      <div class="notif-dot"></div>
+      <div>
+        <div class="notif-item-title">KPI data import completed</div>
+        <div class="notif-item-sub">Production Dept · 5 hours ago</div>
+      </div>
+    </div>
+  </div>
+  <div class="notif-item">
+    <div style="display:flex;gap:10px">
+      <div class="notif-dot"></div>
+      <div>
+        <div class="notif-item-title">Benefit verification request</div>
+        <div class="notif-item-sub">PRJ-2024-001 · Yesterday</div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:10px 16px;border-top:1px solid var(--gray-100)">
+    <button class="btn btn-ghost btn-sm w-full">View all notifications</button>
+  </div>
+</div>
+
+<!-- Modal Overlay -->
+<div class="modal-overlay hidden" id="modalOverlay" onclick="closeModalOnBg(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Modal</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer hidden" id="modalFooter"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE & SEED DATA
+// ============================================================
+const DEMO_DEPARTMENTS = ['Production','Quality','Engineering','Maintenance','Logistics','HR','Finance'];
+const DEMO_USERS = [
+  {id:1,name:'Ahmad Rizky',email:'a.rizky@company.id',role:'Admin',dept:'Engineering',avatar:'AR'},
+  {id:2,name:'Budi Santoso',email:'b.santoso@company.id',role:'Manager',dept:'Production',avatar:'BS'},
+  {id:3,name:'Citra Dewi',email:'c.dewi@company.id',role:'Engineer',dept:'Quality',avatar:'CD'},
+  {id:4,name:'Dani Pratama',email:'d.pratama@company.id',role:'Engineer',dept:'Maintenance',avatar:'DP'},
+  {id:5,name:'Eka Wulandari',email:'e.wulandari@company.id',role:'Viewer',dept:'Logistics',avatar:'EW'},
+];
+const DEMO_PROJECTS = [
+  {id:'PRJ-2024-001',name:'Reduksi Downtime Mesin Packing',dept:'Production',status:'In Progress',priority:'High',owner:'Budi Santoso',start:'2024-01-15',end:'2024-06-30',progress:72,benefit:125000000,description:'Mengurangi downtime mesin packing line 3 melalui preventive maintenance terstruktur dan monitoring real-time.'},
+  {id:'PRJ-2024-002',name:'Optimasi Proses QC Incoming',dept:'Quality',status:'Completed',priority:'Medium',owner:'Citra Dewi',start:'2024-02-01',end:'2024-04-30',progress:100,benefit:85000000,description:'Memperpendek waktu inspeksi incoming material dari 4 jam menjadi 1.5 jam dengan digitalisasi checklist.'},
+  {id:'PRJ-2024-003',name:'5S Workshop Area Mekanik',dept:'Maintenance',status:'Planning',priority:'Low',owner:'Dani Pratama',start:'2024-03-01',end:'2024-05-31',progress:20,benefit:30000000,description:'Implementasi 5S di area workshop mekanik untuk meningkatkan efisiensi pencarian alat dan keselamatan kerja.'},
+  {id:'PRJ-2024-004',name:'Digitalisasi WO Maintenance',dept:'Engineering',status:'In Progress',priority:'High',owner:'Ahmad Rizky',start:'2024-01-20',end:'2024-07-31',progress:55,benefit:200000000,description:'Mengganti sistem WO manual ke sistem digital terintegrasi untuk meningkatkan traceability dan analisis data.'},
+  {id:'PRJ-2024-005',name:'Pengurangan Lead Time Logistik',dept:'Logistics',status:'On Hold',priority:'Medium',owner:'Eka Wulandari',start:'2024-02-15',end:'2024-08-31',progress:35,benefit:95000000,description:'Optimasi rute pengiriman dan jadwal picking untuk mengurangi lead time internal 30%.'},
+];
+const DEMO_KPIS = [
+  {id:1,name:'OEE Mesin Packing',category:'Productivity',unit:'%',direction:'up',target:85,current:78.4,baseline:70,dept:'Production',period:'Monthly'},
+  {id:2,name:'Defect Rate',category:'Quality',unit:'%',direction:'down',target:0.5,current:0.82,baseline:1.2,dept:'Quality',period:'Monthly'},
+  {id:3,name:'MTTR',category:'Reliability',unit:'Hours',direction:'down',target:2,current:3.1,baseline:5.5,dept:'Maintenance',period:'Monthly'},
+  {id:4,name:'On-Time Delivery',category:'Delivery',unit:'%',direction:'up',target:95,current:91.3,baseline:82,dept:'Logistics',period:'Monthly'},
+  {id:5,name:'Cost per Unit',category:'Cost',unit:'IDR',direction:'down',target:12500,current:13200,baseline:15800,dept:'Finance',period:'Monthly'},
+];
+const DEMO_ACTIONS = [
+  {id:1,project:'PRJ-2024-001',title:'Buat jadwal PM mesin packing',owner:'Dani Pratama',due:'2024-04-15',status:'Completed',priority:'High'},
+  {id:2,project:'PRJ-2024-001',title:'Instalasi sensor getaran mesin',owner:'Ahmad Rizky',due:'2024-04-30',status:'In Progress',priority:'High'},
+  {id:3,project:'PRJ-2024-001',title:'Training operator monitoring',owner:'Budi Santoso',due:'2024-05-15',status:'Not Started',priority:'Medium'},
+  {id:4,project:'PRJ-2024-002',title:'Digitalisasi checklist QC',owner:'Citra Dewi',due:'2024-03-31',status:'Completed',priority:'High'},
+  {id:5,project:'PRJ-2024-004',title:'Requirement gathering WO digital',owner:'Ahmad Rizky',due:'2024-02-28',status:'Completed',priority:'High'},
+  {id:6,project:'PRJ-2024-004',title:'Piloting module WO di Plant A',owner:'Dani Pratama',due:'2024-05-31',status:'In Progress',priority:'Medium'},
+];
+const DEMO_IDEAS = [
+  {id:'IDR-001',title:'Auto-lubrication conveyor chain',submitter:'Dani Pratama',dept:'Maintenance',date:'2024-03-01',status:'Approved',category:'Maintenance',effort:'Medium',impact:'High'},
+  {id:'IDR-002',title:'Visual management board produksi',submitter:'Budi Santoso',dept:'Production',date:'2024-03-05',status:'Under Review',category:'Productivity',effort:'Low',impact:'Medium'},
+  {id:'IDR-003',title:'Barcode scanner receiving',submitter:'Citra Dewi',dept:'Quality',date:'2024-03-10',status:'Approved',category:'Quality',effort:'Low',impact:'High'},
+  {id:'IDR-004',title:'Optimasi layout gudang raw material',submitter:'Eka Wulandari',dept:'Logistics',date:'2024-03-15',status:'New',category:'Logistics',effort:'High',impact:'High'},
+  {id:'IDR-005',title:'Automated report KPI harian',submitter:'Ahmad Rizky',dept:'Engineering',date:'2024-03-18',status:'Under Review',category:'IT',effort:'Medium',impact:'Medium'},
+];
+const DEMO_BENEFITS = [
+  {id:1,project:'PRJ-2024-001',type:'Cost Saving',category:'Maintenance Cost',estimated:125000000,realized:98000000,verified:0,baseline:'IDR 580jt/thn',after:'IDR 455jt/thn',method:'Direct Cost Calculation',status:'In Progress',evidence:'Invoice maintenance Q1-Q2 2024'},
+  {id:2,project:'PRJ-2024-002',type:'Productivity',category:'Labor Efficiency',estimated:85000000,realized:85000000,verified:85000000,baseline:'4 jam/batch',after:'1.5 jam/batch',method:'Time Study + Wage Calculation',status:'Verified',evidence:'Time study report + Payroll data'},
+  {id:3,project:'PRJ-2024-004',type:'Cost Saving',category:'Administrative Cost',estimated:200000000,realized:0,verified:0,baseline:'Manual WO',after:'Digital WO',method:'Estimation - to be verified',status:'Estimated',evidence:'Pending'},
+];
+const DEMO_PARETO = [
+  {cause:'Bearing failure',count:42,pct:0},
+  {cause:'Oil contamination',count:28,pct:0},
+  {cause:'Electrical fault',count:18,pct:0},
+  {cause:'Overheating',count:12,pct:0},
+  {cause:'Operator error',count:8,pct:0},
+  {cause:'Vibration',count:6,pct:0},
+  {cause:'Others',count:4,pct:0},
+];
+const DEMO_IMPORT_HISTORY = [
+  {id:'IMP-001',filename:'KPI_Data_March2024.xlsx',type:'KPI',rows:248,status:'Success',errors:0,by:'Ahmad Rizky',date:'2024-03-31 09:15'},
+  {id:'IMP-002',filename:'Production_Data_Q1.csv',type:'Production',rows:1842,status:'Success',errors:3,by:'Budi Santoso',date:'2024-03-29 14:32'},
+  {id:'IMP-003',filename:'Maintenance_WO_Feb.xlsx',type:'Maintenance WO',rows:156,status:'Failed',errors:12,by:'Dani Pratama',date:'2024-03-20 11:05'},
+];
+const DEMO_DOCS = [
+  {id:'DOC-001',title:'Project Charter PRJ-2024-001',type:'Project Charter',version:'v2.1',status:'Approved',project:'PRJ-2024-001',created:'2024-01-15',icon:'📋'},
+  {id:'DOC-002',title:'5 Why Analysis - Mesin Packing',type:'Problem Analysis',version:'v1.0',status:'Draft',project:'PRJ-2024-001',created:'2024-02-10',icon:'🔍'},
+  {id:'DOC-003',title:'Benefit Calculation Report Q1',type:'Benefit Report',version:'v1.3',status:'Approved',project:'PRJ-2024-002',created:'2024-04-01',icon:'💰'},
+  {id:'DOC-004',title:'PDCA Cycle - QC Process',type:'PDCA',version:'v1.0',status:'In Review',project:'PRJ-2024-002',created:'2024-03-15',icon:'🔄'},
+];
+const DEMO_AUDIT = [
+  {icon:'📝',action:'Project status changed to In Progress',meta:'PRJ-2024-001 · Ahmad Rizky · 2024-04-01 09:30'},
+  {icon:'✅',action:'Action item marked Completed',meta:'Install sensor getaran · Dani Pratama · 2024-04-01 08:15'},
+  {icon:'📤',action:'Document DOC-003 approved',meta:'Benefit Report Q1 · Citra Dewi · 2024-03-31 16:00'},
+  {icon:'📥',action:'Import IMP-001 completed',meta:'248 rows imported · Ahmad Rizky · 2024-03-31 09:15'},
+  {icon:'👤',action:'User role updated',meta:'Eka Wulandari → Viewer · Ahmad Rizky · 2024-03-30 14:20'},
+  {icon:'💡',action:'New idea submitted',meta:'IDR-005 · Ahmad Rizky · 2024-03-18 10:45'},
+  {icon:'🔐',action:'User login',meta:'Ahmad Rizky · 2024-04-01 08:00'},
+  {icon:'📊',action:'KPI data updated',meta:'OEE March 2024 · Budi Santoso · 2024-03-29 17:00'},
+];
+
+// State
+let state = {
+  page: 'dashboard',
+  importStep: 0,
+  importFile: null,
+  activeTab: {},
+  charts: {},
+  projects: [...DEMO_PROJECTS],
+  actions: [...DEMO_ACTIONS],
+  ideas: [...DEMO_IDEAS],
+  kpis: [...DEMO_KPIS],
+  benefits: [...DEMO_BENEFITS],
+  importHistory: [...DEMO_IMPORT_HISTORY],
+  docs: [...DEMO_DOCS],
+};
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function navigate(page) {
+  state.page = page;
+  destroyCharts();
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const navMap = {
+    dashboard:'dashboard',projects:'projects',ideas:'ideas',actions:'actions',
+    kpi:'kpi',import:'import',analysis:'analysis',
+    problemsolving:'problemsolving',benefits:'benefits',documents:'documents',
+    auditlog:'auditlog',users:'users',settings:'settings'
+  };
+  const breadMap = {
+    dashboard:'Dashboard',projects:'Projects',ideas:'Ideas Register',actions:'Action Tracker',
+    kpi:'KPI Measurement',import:'Import Center',analysis:'Data Analysis',
+    problemsolving:'Problem Solving',benefits:'Benefits & Saving',documents:'Document Center',
+    auditlog:'Audit Log',users:'Users & Roles',settings:'Settings'
+  };
+  document.querySelectorAll('.nav-item').forEach(el => {
+    if(el.getAttribute('onclick') && el.getAttribute('onclick').includes(`'${page}'`)) el.classList.add('active');
+  });
+  document.getElementById('breadcrumb').innerHTML = `<span>CIMS</span><span>›</span><strong>${breadMap[page]||page}</strong>`;
+  const content = document.getElementById('content');
+  const renders = {
+    dashboard: renderDashboard,
+    projects: renderProjects,
+    ideas: renderIdeas,
+    actions: renderActions,
+    kpi: renderKPI,
+    import: renderImport,
+    analysis: renderAnalysis,
+    problemsolving: renderProblemSolving,
+    benefits: renderBenefits,
+    documents: renderDocuments,
+    auditlog: renderAuditLog,
+    users: renderUsers,
+    settings: renderSettings,
+  };
+  if(renders[page]) { content.innerHTML = renders[page](); afterRender(page); }
+  else content.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🚧</div><h3>Coming Soon</h3><p>This module is under development.</p></div>`;
+  document.getElementById('notifPanel').classList.remove('open');
+}
+
+function destroyCharts() {
+  Object.values(state.charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  state.charts = {};
+}
+
+function toggleNotif() {
+  document.getElementById('notifPanel').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.notif-badge') && !e.target.closest('#notifPanel')) {
+    document.getElementById('notifPanel').classList.remove('open');
+  }
+});
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(title, body, footer='', large=false) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  const mf = document.getElementById('modalFooter');
+  if(footer) { mf.innerHTML = footer; mf.classList.remove('hidden'); } else mf.classList.add('hidden');
+  const mb = document.getElementById('modalBox');
+  mb.className = large ? 'modal modal-lg' : 'modal';
+  document.getElementById('modalOverlay').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
+function closeModalOnBg(e) { if(e.target === document.getElementById('modalOverlay')) closeModal(); }
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmtIDR(n) {
+  if(!n && n!==0) return '-';
+  if(n>=1000000000) return 'IDR '+(n/1000000000).toFixed(1)+'M';
+  if(n>=1000000) return 'IDR '+(n/1000000).toFixed(0)+'jt';
+  return 'IDR '+n.toLocaleString('id-ID');
+}
+function statusBadge(s) {
+  const m = {
+    'In Progress':'badge-blue','Completed':'badge-green','Planning':'badge-gray',
+    'On Hold':'badge-yellow','Cancelled':'badge-red','Success':'badge-green',
+    'Failed':'badge-red','Approved':'badge-green','Under Review':'badge-yellow',
+    'New':'badge-blue','Draft':'badge-gray','In Review':'badge-yellow',
+    'Verified':'badge-teal','Estimated':'badge-gray',
+    'Not Started':'badge-gray','High':'badge-red','Medium':'badge-yellow','Low':'badge-green',
+  };
+  return `<span class="badge ${m[s]||'badge-gray'}">${s}</span>`;
+}
+function progressColor(p) { if(p>=80) return 'green'; if(p>=50) return ''; return 'yellow'; }
+function kpiColor(kpi) {
+  const ratio = kpi.direction === 'up' ? kpi.current/kpi.target : kpi.target/kpi.current;
+  if(ratio>=1) return 'green'; if(ratio>=0.85) return ''; return 'red';
+}
+function kpiPct(kpi) {
+  const p = kpi.direction === 'up'
+    ? Math.min(100, (kpi.current/kpi.target)*100)
+    : Math.min(100, (kpi.target/kpi.current)*100);
+  return p.toFixed(0);
+}
+function tab(page, key, label, active) {
+  if(!state.activeTab[page]) state.activeTab[page] = active;
+  const isA = state.activeTab[page] === key;
+  return `<div class="tab-item ${isA?'active':''}" onclick="setTab('${page}','${key}')">${label}</div>`;
+}
+function setTab(page, key) {
+  state.activeTab[page] = key;
+  navigate(page);
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const totalProj = state.projects.length;
+  const activeProj = state.projects.filter(p=>p.status==='In Progress').length;
+  const completedProj = state.projects.filter(p=>p.status==='Completed').length;
+  const totalBenefit = state.benefits.reduce((s,b)=>s+b.realized,0);
+  const overdueActions = state.actions.filter(a=>a.status!=='Completed' && new Date(a.due)<new Date()).length;
+  const openIdeas = state.ideas.filter(i=>i.status==='New'||i.status==='Under Review').length;
+
+  return `
+<div class="page-header">
+  <div><div class="page-title">Overview Dashboard</div><div class="page-sub">Cross-department CI performance · April 2024</div></div>
+  <div class="flex gap-2">
+    <select class="form-control" style="width:auto;padding:6px 10px">
+      <option>All Departments</option>
+      ${DEMO_DEPARTMENTS.map(d=>`<option>${d}</option>`).join('')}
+    </select>
+    <select class="form-control" style="width:auto;padding:6px 10px">
+      <option>Q1 2024</option><option>Q2 2024</option><option>2024</option>
+    </select>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-icon">📁</div>
+    <div class="stat-label">Total Projects</div>
+    <div class="stat-value">${totalProj}</div>
+    <div class="stat-sub"><span class="stat-delta-up">↑ 2</span> vs last quarter</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">🔵</div>
+    <div class="stat-label">Active Projects</div>
+    <div class="stat-value">${activeProj}</div>
+    <div class="stat-sub">${completedProj} completed this quarter</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">💰</div>
+    <div class="stat-label">Realized Benefit</div>
+    <div class="stat-value" style="font-size:22px">${fmtIDR(totalBenefit)}</div>
+    <div class="stat-sub"><span class="stat-delta-up">↑ 18%</span> vs target</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">✅</div>
+    <div class="stat-label">Action Overdue</div>
+    <div class="stat-value" style="color:${overdueActions>0?'var(--red)':'var(--green)'}">${overdueActions}</div>
+    <div class="stat-sub">${openIdeas} open ideas pending</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">📈</div>
+    <div class="stat-label">Avg KPI Achievement</div>
+    <div class="stat-value">84<span style="font-size:16px">%</span></div>
+    <div class="stat-sub"><span class="stat-delta-up">↑ 4.2%</span> vs last month</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">💡</div>
+    <div class="stat-label">Ideas Submitted</div>
+    <div class="stat-value">${state.ideas.length}</div>
+    <div class="stat-sub">${state.ideas.filter(i=>i.status==='Approved').length} approved this period</div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:24px">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Project Status Distribution</div></div>
+    <div class="card-body"><div class="chart-container"><canvas id="chartProjStatus"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Monthly Benefit Realization (IDR jt)</div></div>
+    <div class="card-body"><div class="chart-container"><canvas id="chartBenefit"></canvas></div></div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:24px">
+  <div class="card">
+    <div class="card-header"><div class="card-title">KPI Summary</div><button class="btn btn-ghost btn-sm" onclick="navigate('kpi')">View All →</button></div>
+    <div class="card-body" style="padding:8px 20px">
+      ${state.kpis.map(k=>`
+      <div style="padding:10px 0;border-bottom:1px solid var(--gray-100)">
+        <div class="flex justify-between mb-2">
+          <span style="font-size:13px;font-weight:600">${k.name}</span>
+          <span style="font-size:13px;font-weight:700;color:${kpiColor(k)==='green'?'var(--green)':kpiColor(k)==='red'?'var(--red)':'var(--gray-700)'}">
+            ${k.current}${k.unit==='%'?'%':' '+k.unit}
+          </span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill ${kpiColor(k)}" style="width:${kpiPct(k)}%"></div></div>
+        <div class="flex justify-between mt-2" style="font-size:11px;color:var(--gray-400)">
+          <span>Target: ${k.target}${k.unit==='%'?'%':' '+k.unit}</span>
+          <span>${kpiPct(k)}% achieved</span>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Active Projects Progress</div><button class="btn btn-ghost btn-sm" onclick="navigate('projects')">View All →</button></div>
+    <div class="card-body" style="padding:8px 20px">
+      ${state.projects.filter(p=>p.status==='In Progress').map(p=>`
+      <div style="padding:10px 0;border-bottom:1px solid var(--gray-100)">
+        <div class="flex justify-between mb-2">
+          <div>
+            <div style="font-size:13px;font-weight:600">${p.name}</div>
+            <div style="font-size:11px;color:var(--gray-500)">${p.id} · ${p.dept}</div>
+          </div>
+          <div style="text-align:right;font-size:13px;font-weight:700">${p.progress}%</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill ${progressColor(p.progress)}" style="width:${p.progress}%"></div></div>
+      </div>`).join('')}
+      <div style="padding:10px 0;border-bottom:1px solid var(--gray-100)">
+        <div class="flex justify-between mb-2">
+          <div>
+            <div style="font-size:13px;font-weight:600">Pengurangan Lead Time Logistik</div>
+            <div style="font-size:11px;color:var(--gray-500)">PRJ-2024-005 · On Hold</div>
+          </div>
+          <div style="text-align:right;font-size:13px;font-weight:700">35%</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill yellow" style="width:35%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title">Recent Actions</div><button class="btn btn-ghost btn-sm" onclick="navigate('actions')">View All →</button></div>
+  <div class="table-wrap" style="border-radius:0;border:none">
+    <table>
+      <thead><tr><th>Action</th><th>Project</th><th>Owner</th><th>Due Date</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>
+        ${state.actions.slice(0,5).map(a=>`<tr>
+          <td style="font-weight:500">${a.title}</td>
+          <td><span style="font-size:11px;color:var(--gray-500)">${a.project}</span></td>
+          <td>${a.owner}</td>
+          <td>${a.due}</td>
+          <td>${statusBadge(a.priority)}</td>
+          <td>${statusBadge(a.status)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+</div>
+`;
+}
+
+function afterRender(page) {
+  if(page==='dashboard') {
+    setTimeout(()=>{
+      const ctx1 = document.getElementById('chartProjStatus');
+      if(ctx1) {
+        state.charts.projStatus = new Chart(ctx1, {
+          type:'doughnut',
+          data:{
+            labels:['In Progress','Completed','Planning','On Hold'],
+            datasets:[{data:[2,1,1,1],backgroundColor:['#2563eb','#16a34a','#94a3b8','#d97706'],borderWidth:0}]
+          },
+          options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:12},padding:16}}}}
+        });
+      }
+      const ctx2 = document.getElementById('chartBenefit');
+      if(ctx2) {
+        state.charts.benefit = new Chart(ctx2, {
+          type:'bar',
+          data:{
+            labels:['Jan','Feb','Mar','Apr','May','Jun'],
+            datasets:[
+              {label:'Estimated',data:[45,52,68,85,90,95],backgroundColor:'rgba(37,99,235,0.15)',borderColor:'#2563eb',borderWidth:2,borderRadius:4},
+              {label:'Realized',data:[30,41,58,72,0,0],backgroundColor:'rgba(22,163,74,0.15)',borderColor:'#16a34a',borderWidth:2,borderRadius:4},
+            ]
+          },
+          options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.04)'}}}}
+        });
+      }
+    }, 50);
+  }
+  if(page==='kpi') setTimeout(renderKPICharts, 50);
+  if(page==='analysis') setTimeout(renderAnalysisCharts, 50);
+}
+
+// ============================================================
+// PROJECTS
+// ============================================================
+function renderProjects() {
+  const curTab = state.activeTab['projects'] || 'list';
+  return `
+<div class="page-header">
+  <div><div class="page-title">Project Portfolio</div><div class="page-sub">All improvement projects across departments</div></div>
+  <button class="btn btn-primary" onclick="openNewProjectModal()">+ New Project</button>
+</div>
+<div class="tab-bar">
+  ${tab('projects','list','Project List',true)}
+  ${tab('projects','kanban','Kanban Board',true)}
+  ${tab('projects','detail','Project Detail',true)}
+</div>
+${curTab==='list' ? renderProjectList() : curTab==='kanban' ? renderKanban() : renderProjectDetail()}
+`;
+}
+
+function renderProjectList() {
+  return `
+<div class="flex gap-2 mb-4">
+  <div class="search-bar"><span>🔍</span><input placeholder="Search projects..." oninput="filterProjects(this.value)" id="projSearch"/></div>
+  <select class="form-control" style="width:auto" onchange="filterProjectsDept(this.value)">
+    <option value="">All Departments</option>
+    ${DEMO_DEPARTMENTS.map(d=>`<option>${d}</option>`).join('')}
+  </select>
+  <select class="form-control" style="width:auto">
+    <option value="">All Status</option>
+    <option>In Progress</option><option>Completed</option><option>Planning</option><option>On Hold</option>
+  </select>
+</div>
+<div class="table-wrap" id="projTable">
+  ${renderProjectTable(state.projects)}
+</div>`;
+}
+
+function renderProjectTable(projects) {
+  return `<table>
+    <thead><tr><th>Project ID</th><th>Project Name</th><th>Department</th><th>Status</th><th>Priority</th><th>Owner</th><th>Progress</th><th>Benefit Est.</th><th>Actions</th></tr></thead>
+    <tbody>
+      ${projects.map(p=>`<tr>
+        <td><span style="font-family:monospace;font-size:12px;color:var(--blue)">${p.id}</span></td>
+        <td style="font-weight:500;max-width:200px">${p.name}</td>
+        <td><span class="badge badge-gray">${p.dept}</span></td>
+        <td>${statusBadge(p.status)}</td>
+        <td>${statusBadge(p.priority)}</td>
+        <td>${p.owner}</td>
+        <td style="min-width:100px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="progress-bar" style="flex:1"><div class="progress-fill ${progressColor(p.progress)}" style="width:${p.progress}%"></div></div>
+            <span style="font-size:12px;font-weight:600;color:var(--gray-600);width:32px;text-align:right">${p.progress}%</span>
+          </div>
+        </td>
+        <td style="font-weight:600;color:var(--green)">${fmtIDR(p.benefit)}</td>
+        <td>
+          <div class="flex gap-2">
+            <button class="btn btn-secondary btn-xs" onclick="viewProject('${p.id}')">View</button>
+            <button class="btn btn-ghost btn-xs" onclick="editProject('${p.id}')">Edit</button>
+          </div>
+        </td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderKanban() {
+  const cols = ['Planning','In Progress','On Hold','Completed'];
+  return `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start">
+    ${cols.map(status=>`
+    <div style="background:var(--gray-100);border-radius:10px;padding:12px">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-500);margin-bottom:12px;display:flex;justify-content:space-between">
+        ${status}
+        <span class="badge badge-gray">${state.projects.filter(p=>p.status===status).length}</span>
+      </div>
+      ${state.projects.filter(p=>p.status===status).map(p=>`
+      <div style="background:white;border-radius:8px;padding:14px;margin-bottom:10px;border:1px solid var(--gray-200);cursor:pointer" onclick="viewProject('${p.id}')">
+        <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px;font-family:monospace">${p.id}</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--gray-800)">${p.name}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="badge badge-gray" style="font-size:10px">${p.dept}</span>
+          ${statusBadge(p.priority)}
+        </div>
+        <div style="margin-top:10px">
+          <div class="progress-bar"><div class="progress-fill ${progressColor(p.progress)}" style="width:${p.progress}%"></div></div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:4px">${p.progress}% complete</div>
+        </div>
+      </div>`).join('')}
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderProjectDetail() {
+  const p = state.projects[0];
+  const projActions = state.actions.filter(a=>a.project===p.id);
+  return `
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
+  <div>
+    <div class="card mb-4">
+      <div class="card-header">
+        <div>
+          <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px;font-family:monospace">${p.id}</div>
+          <div class="card-title" style="font-size:16px">${p.name}</div>
+        </div>
+        <div class="flex gap-2">
+          ${statusBadge(p.status)}
+          ${statusBadge(p.priority)}
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="color:var(--gray-600);font-size:13px;margin-bottom:16px">${p.description}</p>
+        <div class="form-row">
+          <div><span class="form-label">Department</span><span>${p.dept}</span></div>
+          <div><span class="form-label">Owner</span><span>${p.owner}</span></div>
+          <div><span class="form-label">Start Date</span><span>${p.start}</span></div>
+          <div><span class="form-label">Target End</span><span>${p.end}</span></div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="form-label">Overall Progress</div>
+          <div class="flex items-center gap-3">
+            <div class="progress-bar" style="flex:1;height:10px"><div class="progress-fill ${progressColor(p.progress)}" style="width:${p.progress}%"></div></div>
+            <span style="font-size:16px;font-weight:700;color:var(--gray-800)">${p.progress}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Action Items</div><button class="btn btn-primary btn-sm" onclick="openAddActionModal('${p.id}')">+ Add Action</button></div>
+      <div class="table-wrap" style="border:none;border-radius:0">
+        <table>
+          <thead><tr><th>Action</th><th>Owner</th><th>Due</th><th>Priority</th><th>Status</th></tr></thead>
+          <tbody>
+            ${projActions.map(a=>`<tr>
+              <td style="font-weight:500">${a.title}</td>
+              <td>${a.owner}</td>
+              <td>${a.due}</td>
+              <td>${statusBadge(a.priority)}</td>
+              <td>${statusBadge(a.status)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card mb-4">
+      <div class="card-header"><div class="card-title">Project Members</div></div>
+      <div class="card-body" style="padding:8px 20px">
+        ${DEMO_USERS.slice(0,3).map(u=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-100)">
+          <div class="avatar" style="width:32px;height:32px;font-size:12px">${u.avatar}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600">${u.name}</div>
+            <div style="font-size:11px;color:var(--gray-500)">${u.role} · ${u.dept}</div>
+          </div>
+        </div>`).join('')}
+        <button class="btn btn-ghost btn-sm w-full" style="margin-top:8px">+ Add Member</button>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header"><div class="card-title">Benefit Summary</div></div>
+      <div class="card-body">
+        <div class="benefit-metric mb-2"><div class="benefit-metric-label">Estimated</div><div class="benefit-metric-value" style="color:var(--gray-700)">${fmtIDR(p.benefit)}</div></div>
+        <div class="benefit-metric mb-2"><div class="benefit-metric-label">Realized</div><div class="benefit-metric-value" style="color:var(--green)">${fmtIDR(p.benefit*0.78)}</div></div>
+        <div class="benefit-metric"><div class="benefit-metric-label">Verified</div><div class="benefit-metric-value" style="color:var(--teal)">IDR 0</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Status History</div></div>
+      <div class="card-body" style="padding:8px 20px">
+        <div class="audit-row"><div class="audit-icon">🔵</div><div class="audit-content"><div class="audit-action">Status: In Progress</div><div class="audit-meta">Ahmad Rizky · 2024-03-01</div></div></div>
+        <div class="audit-row"><div class="audit-icon">⚪</div><div class="audit-content"><div class="audit-action">Status: Planning</div><div class="audit-meta">Ahmad Rizky · 2024-01-15</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+function filterProjects(q) {
+  const filtered = state.projects.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())||p.id.toLowerCase().includes(q.toLowerCase()));
+  document.getElementById('projTable').innerHTML = renderProjectTable(filtered);
+}
+function filterProjectsDept(dept) {
+  const filtered = dept ? state.projects.filter(p=>p.dept===dept) : state.projects;
+  document.getElementById('projTable').innerHTML = renderProjectTable(filtered);
+}
+function viewProject(id) { state.activeTab['projects']='detail'; navigate('projects'); }
+function editProject(id) { openNewProjectModal(id); }
+function openNewProjectModal(id) {
+  const p = id ? state.projects.find(x=>x.id===id) : null;
+  openModal(p ? 'Edit Project' : 'New Project', `
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Project Code *</label><input class="form-control" value="${p?p.id:''}" placeholder="PRJ-2024-XXX" ${p?'readonly':''}></div>
+      <div class="form-group"><label class="form-label">Department *</label>
+        <select class="form-control">${DEMO_DEPARTMENTS.map(d=>`<option ${p&&p.dept===d?'selected':''}>${d}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Project Name *</label><input class="form-control" value="${p?p.name:''}" placeholder="Enter project name"></div>
+    <div class="form-group"><label class="form-label">Description</label><textarea class="form-control" rows="3" placeholder="Project description and objectives...">${p?p.description:''}</textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Owner *</label>
+        <select class="form-control">${DEMO_USERS.map(u=>`<option ${p&&p.owner===u.name?'selected':''}>${u.name}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label class="form-label">Priority</label>
+        <select class="form-control"><option>High</option><option>Medium</option><option>Low</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" value="${p?p.start:'2024-04-01'}"></div>
+      <div class="form-group"><label class="form-label">Target End Date</label><input type="date" class="form-control" value="${p?p.end:'2024-12-31'}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Estimated Benefit (IDR)</label><input type="number" class="form-control" value="${p?p.benefit:''}" placeholder="e.g. 100000000"></div>
+  `, `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveProject()">Save Project</button>`, true);
+}
+function saveProject() {
+  showToast('Project saved successfully!');
+  closeModal();
+  navigate('projects');
+}
+
+// ============================================================
+// IDEAS
+// ============================================================
+function renderIdeas() {
+  return `
+<div class="page-header">
+  <div><div class="page-title">Ideas Register</div><div class="page-sub">Employee improvement ideas and proposals</div></div>
+  <button class="btn btn-primary" onclick="openNewIdeaModal()">+ Submit Idea</button>
+</div>
+<div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat-card"><div class="stat-label">Total Ideas</div><div class="stat-value">${state.ideas.length}</div></div>
+  <div class="stat-card"><div class="stat-label">New</div><div class="stat-value" style="color:var(--blue)">${state.ideas.filter(i=>i.status==='New').length}</div></div>
+  <div class="stat-card"><div class="stat-label">Under Review</div><div class="stat-value" style="color:var(--yellow)">${state.ideas.filter(i=>i.status==='Under Review').length}</div></div>
+  <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" style="color:var(--green)">${state.ideas.filter(i=>i.status==='Approved').length}</div></div>
+</div>
+<div class="flex gap-2 mb-4">
+  <div class="search-bar"><span>🔍</span><input placeholder="Search ideas..."/></div>
+  <select class="form-control" style="width:auto"><option>All Status</option><option>New</option><option>Under Review</option><option>Approved</option></select>
+  <select class="form-control" style="width:auto"><option>All Impact</option><option>High</option><option>Medium</option><option>Low</option></select>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Idea ID</th><th>Title</th><th>Submitter</th><th>Department</th><th>Category</th><th>Effort</th><th>Impact</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+    <tbody>
+      ${state.ideas.map(i=>`<tr>
+        <td><span style="font-family:monospace;font-size:12px;color:var(--blue)">${i.id}</span></td>
+        <td style="font-weight:500">${i.title}</td>
+        <td>${i.submitter}</td>
+        <td><span class="badge badge-gray">${i.dept}</span></td>
+        <td><span class="badge badge-purple">${i.category}</span></td>
+        <td>${statusBadge(i.effort)}</td>
+        <td>${statusBadge(i.impact)}</td>
+        <td>${statusBadge(i.status)}</td>
+        <td style="font-size:12px;color:var(--gray-500)">${i.date}</td>
+        <td>
+          <div class="flex gap-2">
+            <button class="btn btn-secondary btn-xs">View</button>
+            <button class="btn btn-ghost btn-xs" onclick="approveIdea('${i.id}')">Approve</button>
+          </div>
+        </td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+</div>`;
+}
+function openNewIdeaModal() {
+  openModal('Submit New Idea',`
+    <div class="form-group"><label class="form-label">Idea Title *</label><input class="form-control" placeholder="Brief, descriptive title for your idea"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-control"><option>Productivity</option><option>Quality</option><option>Safety</option><option>Cost</option><option>Maintenance</option><option>IT</option><option>Logistics</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Department</label>
+        <select class="form-control">${DEMO_DEPARTMENTS.map(d=>`<option>${d}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Problem Description</label><textarea class="form-control" rows="3" placeholder="What problem does this idea solve?"></textarea></div>
+    <div class="form-group"><label class="form-label">Proposed Solution</label><textarea class="form-control" rows="3" placeholder="Describe your proposed solution..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Estimated Effort</label>
+        <select class="form-control"><option>Low</option><option>Medium</option><option>High</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Expected Impact</label>
+        <select class="form-control"><option>Low</option><option>Medium</option><option>High</option></select>
+      </div>
+    </div>
+  `,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();showToast('Idea submitted successfully!')">Submit Idea</button>`,true);
+}
+function approveIdea(id) {
+  const idea = state.ideas.find(i=>i.id===id);
+  if(idea) { idea.status='Approved'; navigate('ideas'); showToast(`Idea ${id} approved!`); }
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function renderActions() {
+  const overdue = state.actions.filter(a=>a.status!=='Completed'&&new Date(a.due)<new Date());
+  return `
+<div class="page-header">
+  <div><div class="page-title">Action Tracker</div><div class="page-sub">Track and manage all improvement actions</div></div>
+  <button class="btn btn-primary" onclick="openAddActionModal()">+ Add Action</button>
+</div>
+${overdue.length>0?`<div class="alert alert-warning">⚠ ${overdue.length} action(s) are overdue. Please review and update.</div>`:''}
+<div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${state.actions.length}</div></div>
+  <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--green)">${state.actions.filter(a=>a.status==='Completed').length}</div></div>
+  <div class="stat-card"><div class="stat-label">In Progress</div><div class="stat-value" style="color:var(--blue)">${state.actions.filter(a=>a.status==='In Progress').length}</div></div>
+  <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value" style="color:var(--red)">${overdue.length}</div></div>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Action</th><th>Project</th><th>Owner</th><th>Due Date</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+      ${state.actions.map(a=>{
+        const isOverdue = a.status!=='Completed'&&new Date(a.due)<new Date();
+        return `<tr style="${isOverdue?'background:rgba(220,38,38,0.03)':''}">
+          <td style="font-weight:500">${a.title}${isOverdue?'<span class="badge badge-red" style="margin-left:8px;font-size:9px">OVERDUE</span>':''}</td>
+          <td><span style="font-size:11px;color:var(--blue);font-family:monospace">${a.project}</span></td>
+          <td>${a.owner}</td>
+          <td style="font-size:13px${isOverdue?';color:var(--red);font-weight:600':''}">${a.due}</td>
+          <td>${statusBadge(a.priority)}</td>
+          <td>${statusBadge(a.status)}</td>
+          <td>
+            <div class="flex gap-2">
+              <button class="btn btn-secondary btn-xs" onclick="cycleActionStatus(${a.id})">Update</button>
+              <button class="btn btn-ghost btn-xs">Edit</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>
+</div>`;
+}
+function openAddActionModal(projectId='') {
+  openModal('Add Action Item',`
+    <div class="form-group"><label class="form-label">Action Title *</label><input class="form-control" placeholder="Describe the action to be taken"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Project</label>
+        <select class="form-control">${state.projects.map(p=>`<option ${p.id===projectId?'selected':''}>${p.id} - ${p.name.substring(0,30)}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label class="form-label">Owner *</label>
+        <select class="form-control">${DEMO_USERS.map(u=>`<option>${u.name}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Due Date *</label><input type="date" class="form-control" value="2024-05-31"></div>
+      <div class="form-group"><label class="form-label">Priority</label>
+        <select class="form-control"><option>High</option><option selected>Medium</option><option>Low</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Description / Notes</label><textarea class="form-control" rows="3" placeholder="Additional details..."></textarea></div>
+  `,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();showToast('Action added successfully!')">Add Action</button>`,true);
+}
+function cycleActionStatus(id) {
+  const a = state.actions.find(x=>x.id===id);
+  if(!a) return;
+  const cycle = ['Not Started','In Progress','Completed'];
+  const idx = cycle.indexOf(a.status);
+  a.status = cycle[(idx+1)%cycle.length];
+  navigate('actions');
+  showToast(`Status updated to "${a.status}"`);
+}
+
+// ============================================================
+// KPI
+// ============================================================
+function renderKPI() {
+  return `
+<div class="page-header">
+  <div><div class="page-title">KPI Measurement</div><div class="page-sub">Key performance indicator tracking by period</div></div>
+  <div class="flex gap-2">
+    <select class="form-control" style="width:auto"><option>March 2024</option><option>February 2024</option><option>January 2024</option></select>
+    <button class="btn btn-secondary">Export</button>
+    <button class="btn btn-primary" onclick="openKPIEntryModal()">+ Record Data</button>
+  </div>
+</div>
+
+<div class="stat-grid" style="grid-template-columns:repeat(5,1fr)">
+  ${state.kpis.map(k=>`
+  <div class="stat-card" style="cursor:pointer" onclick="openKPIDetail(${k.id})">
+    <div class="stat-label">${k.name}</div>
+    <div class="kpi-gauge">
+      <div class="kpi-value" style="color:${kpiColor(k)==='green'?'var(--green)':kpiColor(k)==='red'?'var(--red)':'var(--gray-700)'}">${k.current}<span style="font-size:16px">${k.unit==='%'?'%':''}</span></div>
+      <div class="kpi-target">Target: ${k.target}${k.unit==='%'?'%':' '+k.unit}</div>
+      <div class="kpi-status-bar"><div class="progress-fill ${kpiColor(k)}" style="height:8px;width:${kpiPct(k)}%;border-radius:4px;background:${kpiColor(k)==='green'?'var(--green)':kpiColor(k)==='red'?'var(--red)':'var(--yellow)'}"></div></div>
+      <div style="font-size:11px;color:var(--gray-500);margin-top:4px">${kpiPct(k)}% of target</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-400)">
+      <span>Baseline: ${k.baseline}${k.unit==='%'?'%':''}</span>
+      <span class="badge ${kpiColor(k)==='green'?'badge-green':kpiColor(k)==='red'?'badge-red':'badge-yellow'}" style="font-size:10px">${kpiColor(k)==='green'?'✓ On Track':kpiColor(k)==='red'?'✗ Off Track':'~ Near'}</span>
+    </div>
+  </div>`).join('')}
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">KPI Trend (6 Months)</div></div>
+    <div class="card-body"><div class="chart-container"><canvas id="kpiTrendChart"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">KPI Master List</div><button class="btn btn-primary btn-sm" onclick="openKPIMasterModal()">+ Add KPI</button></div>
+    <div class="table-wrap" style="border:none;border-radius:0">
+      <table>
+        <thead><tr><th>KPI Name</th><th>Category</th><th>Unit</th><th>Direction</th><th>Period</th><th>Dept</th></tr></thead>
+        <tbody>
+          ${state.kpis.map(k=>`<tr>
+            <td style="font-weight:500">${k.name}</td>
+            <td><span class="badge badge-purple">${k.category}</span></td>
+            <td>${k.unit}</td>
+            <td><span class="badge ${k.direction==='up'?'badge-green':'badge-blue'}">${k.direction==='up'?'↑ Higher':'↓ Lower'}</span></td>
+            <td>${k.period}</td>
+            <td>${k.dept}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>`;
+}
+function renderKPICharts() {
+  const ctx = document.getElementById('kpiTrendChart');
+  if(ctx) {
+    state.charts.kpiTrend = new Chart(ctx, {
+      type:'line',
+      data:{
+        labels:['Oct','Nov','Dec','Jan','Feb','Mar'],
+        datasets:[
+          {label:'OEE %',data:[68,70,71,73,75,78],borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,0.05)',tension:0.4,pointRadius:4,fill:true},
+          {label:'OTD %',data:[80,82,84,86,89,91],borderColor:'#16a34a',backgroundColor:'rgba(22,163,74,0.05)',tension:0.4,pointRadius:4,fill:true},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:false,grid:{color:'rgba(0,0,0,0.04)'}}}}
+    });
+  }
+}
+function openKPIEntryModal() {
+  openModal('Record KPI Data',`
+    <div class="alert alert-info">ℹ Recording KPI measurement for March 2024</div>
+    ${state.kpis.map(k=>`
+    <div class="form-group">
+      <label class="form-label">${k.name} <span style="font-weight:400;color:var(--gray-400)">(Target: ${k.target}${k.unit==='%'?'%':' '+k.unit})</span></label>
+      <div class="flex gap-2 items-center">
+        <input type="number" class="form-control" value="${k.current}" step="0.01">
+        <span style="color:var(--gray-500);font-size:13px;white-space:nowrap">${k.unit}</span>
+      </div>
+    </div>`).join('')}
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" rows="2" placeholder="Optional notes for this period..."></textarea></div>
+  `,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();showToast('KPI data recorded for March 2024')">Save Measurement</button>`,true);
+}
+function openKPIMasterModal() {
+  openModal('Add KPI Master',`
+    <div class="form-group"><label class="form-label">KPI Name *</label><input class="form-control" placeholder="e.g. Overall Equipment Effectiveness"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-control"><option>Productivity</option><option>Quality</option><option>Cost</option><option>Delivery</option><option>Safety</option><option>Reliability</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Unit</label><input class="form-control" placeholder="%, Hours, Units, IDR..."></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Direction</label>
+        <select class="form-control"><option value="up">↑ Higher is better</option><option value="down">↓ Lower is better</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Measurement Period</label>
+        <select class="form-control"><option>Daily</option><option>Weekly</option><option selected>Monthly</option><option>Quarterly</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Baseline Value</label><input type="number" class="form-control" placeholder="Starting value"></div>
+      <div class="form-group"><label class="form-label">Annual Target</label><input type="number" class="form-control" placeholder="Target to achieve"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Department</label>
+      <select class="form-control">${DEMO_DEPARTMENTS.map(d=>`<option>${d}</option>`).join('')}</select>
+    </div>
+  `,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();showToast('KPI added to master list')">Add KPI</button>`,true);
+}
+function openKPIDetail(id) { showToast('Opening KPI detail view...'); }
+
+// ============================================================
+// IMPORT CENTER
+// ============================================================
+function renderImport() {
+  const curTab = state.activeTab['import'] || 'upload';
+  return `
+<div class="page-header">
+  <div><div class="page-title">Import Center</div><div class="page-sub">Upload, validate, and import Excel/CSV data</div></div>
+</div>
+<div class="tab-bar">
+  ${tab('import','upload','New Import',true)}
+  ${tab('import','history','Import History',true)}
+</div>
+${curTab==='upload' ? renderImportWizard() : renderImportHistory()}`;
+}
+
+function renderImportWizard() {
+  const step = state.importStep || 0;
+  return `
+<div class="steps mb-6" style="max-width:600px;margin:0 auto 32px">
+  ${['Upload File','Select Sheet','Map Columns','Preview & Validate','Import'].map((s,i)=>`
+  <div class="step">
+    <div class="step-dot ${i<step?'done':i===step?'active':'pending'}">${i<step?'✓':i+1}</div>
+    <div class="step-label ${i===step?'active':''}">${s}</div>
+  </div>`).join('')}
+</div>
+${[renderImportStep0,renderImportStep1,renderImportStep2,renderImportStep3,renderImportStep4][step]()}`;
+}
+
+function renderImportStep0() {
+  return `
+<div class="card" style="max-width:600px;margin:0 auto">
+  <div class="card-header"><div class="card-title">Upload File</div></div>
+  <div class="card-body">
+    <div class="form-group">
+      <label class="form-label">Import Type *</label>
+      <select class="form-control">
+        <option>KPI Data</option><option>Production Data</option><option>Maintenance WO</option><option>Quality Data</option><option>Project Data</option>
+      </select>
+    </div>
+    <div class="import-zone" onclick="simulateFileUpload()">
+      <div class="import-zone-icon">📁</div>
+      <p style="font-size:15px;font-weight:600;color:var(--gray-700);margin-bottom:6px">Click to upload or drag & drop</p>
+      <p>Supported: .xlsx, .xls, .csv (max 10MB)</p>
+    </div>
+    <div class="alert alert-info mt-4">
+      ℹ <strong>Note:</strong> Data will be previewed and validated before any changes are made to the database.
+    </div>
+  </div>
+  <div class="modal-footer" style="border-top:1px solid var(--gray-100);padding:16px 20px;display:flex;justify-content:flex-end;gap:10px">
+    <button class="btn btn-secondary" disabled>Back</button>
+    <button class="btn btn-primary" onclick="importNextStep()">Next: Select Sheet →</button>
+  </div>
+</div>`;
+}
+function renderImportStep1() {
+  return `
+<div class="card" style="max-width:600px;margin:0 auto">
+  <div class="card-header"><div class="card-title">Select Sheet — KPI_Data_April2024.xlsx</div></div>
+  <div class="card-body">
+    <div class="alert alert-success">✓ File uploaded successfully. 3 sheets detected.</div>
+    <div class="form-group"><label class="form-label">Select Sheet to Import</label></div>
+    ${['KPI Data (248 rows)','Targets 2024 (12 rows)','Metadata (3 rows)'].map((s,i)=>`
+    <label style="display:flex;align-items:center;gap:12px;padding:14px;border:2px solid ${i===0?'var(--blue)':'var(--gray-200)'};border-radius:8px;margin-bottom:8px;cursor:pointer;background:${i===0?'var(--blue-pale)':'white'}">
+      <input type="radio" name="sheet" ${i===0?'checked':''}>
+      <div>
+        <div style="font-weight:600;font-size:13px">${s.split('(')[0].trim()}</div>
+        <div style="font-size:12px;color:var(--gray-500)">${s.match(/\(.*\)/)?.[0]||''}</div>
+      </div>
+    </label>`).join('')}
+    <div class="form-group mt-4"><label class="form-label">Header Row Number</label>
+      <input type="number" class="form-control" value="1" style="max-width:100px">
+    </div>
+  </div>
+  <div class="modal-footer" style="border-top:1px solid var(--gray-100);padding:16px 20px;display:flex;justify-content:flex-end;gap:10px">
+    <button class="btn btn-secondary" onclick="importPrevStep()">← Back</button>
+    <button class="btn btn-primary" onclick="importNextStep()">Next: Map Columns →</button>
+  </div>
+</div>`;
+}
+function renderImportStep2() {
+  const cols = ['kpi_name','period','value','unit','department','notes'];
+  const srcCols = ['KPI Name','Period','Actual Value','Unit','Dept','Remarks','Date','Shift'];
+  return `
+<div class="card" style="max-width:700px;margin:0 auto">
+  <div class="card-header"><div class="card-title">Map Columns</div></div>
+  <div class="card-body">
+    <div class="alert alert-info">ℹ Match the source columns from your file to the target fields in the system. Required fields are marked with *.</div>
+    <table style="width:100%">
+      <thead><tr><th style="padding:8px;background:var(--gray-50);font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-500)">Target Field</th><th style="padding:8px;background:var(--gray-50);font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-500)">Source Column</th><th style="padding:8px;background:var(--gray-50);font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-500)">Sample Value</th></tr></thead>
+      <tbody>
+        ${cols.map((c,i)=>`<tr style="border-bottom:1px solid var(--gray-100)">
+          <td style="padding:10px 8px;font-weight:600;font-size:13px">${c} ${i<4?'<span style="color:var(--red)">*</span>':''}</td>
+          <td style="padding:10px 8px">
+            <select class="form-control">
+              <option>— Select —</option>
+              ${srcCols.map((s,j)=>`<option ${j===i?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </td>
+          <td style="padding:10px 8px;font-size:12px;color:var(--gray-500)">${['OEE Mesin Packing','Mar 2024','78.4','%','Production',''][i]||'-'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="modal-footer" style="border-top:1px solid var(--gray-100);padding:16px 20px;display:flex;justify-content:flex-end;gap:10px">
+    <button class="btn btn-secondary" onclick="importPrevStep()">← Back</button>
+    <button class="btn btn-primary" onclick="importNextStep()">Next: Preview & Validate →</button>
+  </div>
+</div>`;
+}
+function renderImportStep3() {
+  return `
+<div class="card" style="max-width:800px;margin:0 auto">
+  <div class="card-header"><div class="card-title">Preview & Validation</div></div>
+  <div class="card-body">
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+      <div class="stat-card"><div class="stat-label">Total Rows</div><div class="stat-value">248</div></div>
+      <div class="stat-card"><div class="stat-label">Valid</div><div class="stat-value" style="color:var(--green)">245</div></div>
+      <div class="stat-card"><div class="stat-label">Errors</div><div class="stat-value" style="color:var(--red)">2</div></div>
+      <div class="stat-card"><div class="stat-label">Warnings</div><div class="stat-value" style="color:var(--yellow)">3</div></div>
+    </div>
+    <div class="alert alert-warning">⚠ 2 rows have errors and will be skipped. 3 rows have warnings (possible duplicates). Review below.</div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">❌ Errors (will be skipped)</div>
+      <div style="background:var(--red-light);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--red)">Row 47: Value '—' is not a valid number for field 'value'</div>
+      <div style="background:var(--red-light);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--red);margin-top:6px">Row 183: Department 'PROD' not found in master data</div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:6px">⚠ Warnings (will be imported)</div>
+      <div style="background:var(--yellow-light);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--yellow)">Rows 12, 56, 89: Possible duplicate entries for same KPI + Period. Will overwrite existing.</div>
+    </div>
+    <div class="table-wrap" style="max-height:200px;overflow-y:auto">
+      <table>
+        <thead><tr><th>#</th><th>KPI Name</th><th>Period</th><th>Value</th><th>Unit</th><th>Dept</th><th>Status</th></tr></thead>
+        <tbody>
+          ${[
+            ['OEE Mesin Packing','Mar 2024','78.4','%','Production','✓'],
+            ['Defect Rate','Mar 2024','0.82','%','Quality','✓'],
+            ['MTTR','Mar 2024','3.1','Hours','Maintenance','✓'],
+            ['On-Time Delivery','Mar 2024','91.3','%','Logistics','⚠ Duplicate'],
+            ['Cost per Unit','Mar 2024','13200','IDR','Finance','✓'],
+          ].map((r,i)=>`<tr>
+            <td style="font-size:12px;color:var(--gray-400)">${i+1}</td>
+            <td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td>
+            <td style="color:${r[5].includes('⚠')?'var(--yellow)':'var(--green)'};font-size:12px">${r[5]}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="modal-footer" style="border-top:1px solid var(--gray-100);padding:16px 20px;display:flex;justify-content:flex-end;gap:10px">
+    <button class="btn btn-secondary" onclick="importPrevStep()">← Back</button>
+    <button class="btn btn-danger btn-sm" onclick="importNextStep()">Confirm & Import 245 rows →</button>
+  </div>
+</div>`;
+}
+function renderImportStep4() {
+  return `
+<div class="card" style="max-width:500px;margin:0 auto;text-align:center">
+  <div class="card-body" style="padding:48px 32px">
+    <div style="font-size:64px;margin-bottom:16px">✅</div>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;color:var(--gray-900)">Import Completed!</h2>
+    <p style="color:var(--gray-500);font-size:14px;margin-bottom:24px">245 rows imported successfully. 2 rows were skipped due to errors.</p>
+    <div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;text-align:center">
+      <div><div style="font-size:24px;font-weight:800;color:var(--green)">245</div><div style="font-size:12px;color:var(--gray-500)">Imported</div></div>
+      <div><div style="font-size:24px;font-weight:800;color:var(--red)">2</div><div style="font-size:12px;color:var(--gray-500)">Skipped</div></div>
+      <div><div style="font-size:24px;font-weight:800;color:var(--yellow)">3</div><div style="font-size:12px;color:var(--gray-500)">Overwritten</div></div>
+    </div>
+    <div style="margin-top:24px;display:flex;gap:12px;justify-content:center">
+      <button class="btn btn-secondary" onclick="downloadErrorReport()">Download Error Report</button>
+      <button class="btn btn-primary" onclick="state.importStep=0;navigate('import')">New Import</button>
+    </div>
+  </div>
+</div>`;
+}
+function importNextStep() { state.importStep = (state.importStep||0)+1; navigate('import'); }
+function importPrevStep() { state.importStep = Math.max(0,(state.importStep||0)-1); navigate('import'); }
+function simulateFileUpload() { showToast('File "KPI_Data_April2024.xlsx" uploaded. Proceed to next step.'); }
+function downloadErrorReport() { showToast('Error report downloaded: import_errors_IMP-001.xlsx'); }
+
+function renderImportHistory() {
+  return `
+<div class="flex gap-2 mb-4">
+  <div class="search-bar"><span>🔍</span><input placeholder="Search import history..."/></div>
+  <select class="form-control" style="width:auto"><option>All Types</option><option>KPI</option><option>Production</option><option>Maintenance WO</option></select>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Import ID</th><th>Filename</th><th>Type</th><th>Rows</th><th>Errors</th><th>Status</th><th>Imported By</th><th>Date</th><th>Actions</th></tr></thead>
+    <tbody>
+      ${state.importHistory.map(h=>`<tr>
+        <td><span style="font-family:monospace;font-size:12px;color:var(--blue)">${h.id}</span></td>
+        <td style="font-weight:500">📊 ${h.filename}</td>
+        <td><span class="badge badge-purple">${h.type}</span></td>
+        <td>${h.rows.toLocaleString()}</td>
+        <td style="color:${h.errors>0?'var(--red)':'var(--green)'};font-weight:600">${h.errors}</td>
+        <td>${statusBadge(h.status)}</td>
+        <td>${h.by}</td>
+        <td style="font-size:12px;color:var(--gray-500)">${h.date}</td>
+        <td><button class="btn btn-ghost btn-xs">Details</button></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+</div>`;
+}
+
+// ============================================================
+// DATA ANALYSIS
+// ============================================================
+function renderAnalysis() {
+  const curTab = state.activeTab['analysis'] || 'pareto';
+  return `
+<div class="page-header">
+  <div><div class="page-title">Data Analysis</div><div class="page-sub">Pareto, trend, before-after analysis tools</div></div>
+  <button class="btn btn-secondary">Export Report</button>
+</div>
+<div class="tab-bar">
+  ${tab('analysis','pareto','Pareto Analysis',true)}
+  ${tab('analysis','trend','Trend Analysis',true)}
+  ${tab('analysis','beforeafter','Before vs After',true)}
+</div>
+${curTab==='pareto' ? renderPareto() : curTab==='trend' ? renderTrend() : renderBeforeAfter()}`;
+}
+
+function renderPareto() {
+  let total = DEMO_PARETO.reduce((s,p)=>s+p.count,0);
+  let cum = 0;
+  const data = DEMO_PARETO.map(p=>{
+    p.pct = (p.count/total)*100;
+    cum += p.pct;
+    return {...p, cum: cum.toFixed(1)};
+  });
+  return `
+<div class="flex gap-2 mb-4">
+  <select class="form-control" style="width:auto"><option>Mesin Packing - Failure Causes</option><option>QC Defects by Type</option><option>Downtime by Reason</option></select>
+  <select class="form-control" style="width:auto"><option>Q1 2024</option><option>2024 YTD</option></select>
+  <div style="flex:1"></div>
+  <button class="btn btn-secondary btn-sm">Export PDF</button>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Pareto Chart — Mesin Packing Failure Causes</div></div>
+    <div class="card-body"><div class="chart-container"><canvas id="paretoChart"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Pareto Table</div></div>
+    <div class="card-body" style="padding:0">
+      <table class="pareto-table">
+        <thead><tr><th>#</th><th>Cause</th><th>Count</th><th>%</th><th>Cumulative %</th><th>Bar</th></tr></thead>
+        <tbody>
+          ${data.map((d,i)=>`<tr style="background:${parseFloat(d.cum)<=80?'rgba(22,163,74,0.03)':''}">
+            <td style="font-weight:700;color:var(--gray-400)">${i+1}</td>
+            <td style="font-weight:600">${d.cause}</td>
+            <td style="font-weight:700">${d.count}</td>
+            <td>${d.pct.toFixed(1)}%</td>
+            <td class="${parseFloat(d.cum)<=80?'cum-80':''}">${d.cum}%</td>
+            <td class="pareto-bar-cell"><div class="pareto-bar-bg"><div class="pareto-bar-fill" style="width:${d.pct.toFixed(0)}%"></div></div></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="padding:12px 16px;background:var(--green-light);border-top:1px solid var(--gray-100);font-size:12px;color:var(--green);font-weight:600">
+        ✓ 80% of failures caused by top 3 causes (Bearing, Oil contamination, Electrical)
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+function renderTrend() {
+  return `
+<div class="flex gap-2 mb-4">
+  <select class="form-control" style="width:auto"><option>OEE Mesin Packing</option><option>Defect Rate</option><option>MTTR</option></select>
+  <select class="form-control" style="width:auto"><option>Jan–Jun 2024</option><option>2023</option><option>2024 YTD</option></select>
+</div>
+<div class="card mb-4">
+  <div class="card-header"><div class="card-title">OEE Trend vs Target</div></div>
+  <div class="card-body"><div class="chart-container" style="height:300px"><canvas id="trendChart"></canvas></div></div>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Statistical Summary</div></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        ${[['Average','74.2%'],['Min Value','68.0%'],['Max Value','78.4%'],['Std Dev','3.2%'],['Trend','↑ +1.4%/mo'],['Forecast Jun','81.5%']].map(([l,v])=>`
+        <div class="benefit-metric"><div class="benefit-metric-label">${l}</div><div class="benefit-metric-value" style="font-size:18px">${v}</div></div>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Analysis Notes</div></div>
+    <div class="card-body">
+      <div class="alert alert-success">↑ OEE menunjukkan tren positif sejak implementasi PM terstruktur di Jan 2024.</div>
+      <div class="alert alert-warning">⚠ Drop pada Feb 2024 disebabkan unplanned breakdown motor conveyor. Sudah ditangani.</div>
+      <textarea class="form-control" rows="4" placeholder="Add analysis notes...">OEE improvement driven by:
+1. Preventive maintenance schedule (PRJ-2024-001)
+2. Operator training program
+3. Reduced changeover time</textarea>
+      <button class="btn btn-secondary btn-sm mt-4">Save Notes</button>
+    </div>
+  </div>
+</div>`;
+}
+
+function renderBeforeAfter() {
+  return `
+<div class="flex gap-2 mb-4">
+  <select class="form-control" style="width:auto"><option>PRJ-2024-001: Reduksi Downtime</option><option>PRJ-2024-002: Optimasi QC</option></select>
+</div>
+<div class="card mb-4">
+  <div class="card-header"><div class="card-title">Before vs After Comparison — PRJ-2024-001</div></div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:center">
+      <div style="background:var(--red-light);border-radius:10px;padding:20px;text-align:center">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:12px">BEFORE</div>
+        ${[['OEE','68.0%'],['Downtime/mo','42 hrs'],['MTTR','5.5 hrs'],['PM Coverage','35%']].map(([l,v])=>`
+        <div style="margin-bottom:10px"><div style="font-size:11px;color:var(--gray-500)">${l}</div><div style="font-size:24px;font-weight:800;color:var(--red)">${v}</div></div>`).join('')}
+      </div>
+      <div style="text-align:center;font-size:32px">→</div>
+      <div style="background:var(--green-light);border-radius:10px;padding:20px;text-align:center">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--green);margin-bottom:12px">AFTER</div>
+        ${[['OEE','78.4%'],['Downtime/mo','18 hrs'],['MTTR','3.1 hrs'],['PM Coverage','82%']].map(([l,v])=>`
+        <div style="margin-bottom:10px"><div style="font-size:11px;color:var(--gray-500)">${l}</div><div style="font-size:24px;font-weight:800;color:var(--green)">${v}</div></div>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header"><div class="card-title">Before vs After Chart</div></div>
+  <div class="card-body"><div class="chart-container"><canvas id="beforeAfterChart"></canvas></div></div>
+</div>`;
+}
+
+function renderAnalysisCharts() {
+  const curTab = state.activeTab['analysis'] || 'pareto';
+  if(curTab === 'pareto') {
+    const ctx = document.getElementById('paretoChart');
+    if(!ctx) return;
+    const labels = DEMO_PARETO.map(d=>d.cause);
+    const vals = DEMO_PARETO.map(d=>d.count);
+    const total = vals.reduce((a,b)=>a+b,0);
+    let cum = 0;
+    const cumPct = vals.map(v=>{ cum+=v/total*100; return parseFloat(cum.toFixed(1)); });
+    state.charts.pareto = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels,
+        datasets:[
+          {type:'bar',label:'Count',data:vals,backgroundColor:'rgba(37,99,235,0.7)',borderRadius:4,yAxisID:'y'},
+          {type:'line',label:'Cumulative %',data:cumPct,borderColor:'#dc2626',borderWidth:2,pointRadius:4,fill:false,yAxisID:'y2'},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},
+        scales:{
+          y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.04)'}},
+          y2:{position:'right',beginAtZero:true,max:100,grid:{display:false},ticks:{callback:v=>v+'%'}}
+        }
+      }
+    });
+  } else if(curTab === 'trend') {
+    const ctx = document.getElementById('trendChart');
+    if(!ctx) return;
+    state.charts.trend = new Chart(ctx, {
+      type:'line',
+      data:{
+        labels:['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets:[
+          {label:'Actual OEE',data:[70,68,73,76,78.4,null],borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,0.08)',tension:0.4,fill:true,pointRadius:5},
+          {label:'Target',data:[72,73,74,75,76,77],borderColor:'#16a34a',borderDash:[6,3],tension:0,pointRadius:0},
+          {label:'Forecast',data:[null,null,null,null,78.4,81.5],borderColor:'#7c3aed',borderDash:[4,4],tension:0.4,pointRadius:4},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{min:60,grid:{color:'rgba(0,0,0,0.04)'}}}}
+    });
+  } else if(curTab==='beforeafter') {
+    const ctx = document.getElementById('beforeAfterChart');
+    if(!ctx) return;
+    state.charts.ba = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels:['OEE (%)','Downtime (hrs)','MTTR (hrs)','PM Coverage (%)'],
+        datasets:[
+          {label:'Before',data:[68,42,5.5,35],backgroundColor:'rgba(220,38,38,0.6)',borderRadius:4},
+          {label:'After',data:[78.4,18,3.1,82],backgroundColor:'rgba(22,163,74,0.6)',borderRadius:4},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.04)'}}}}
+    });
+  }
+}
+
+// ============================================================
+// PROBLEM SOLVING
+// ============================================================
+function renderProblemSolving() {
+  const curTab = state.activeTab['problemsolving'] || '5why';
+  return `
+<div class="page-header">
+  <div><div class="page-title">Problem Solving Tools</div><div class="page-sub">5 Why, Fishbone, PDCA analysis linked to projects</div></div>
+  <div class="flex gap-2">
+    <select class="form-control" style="width:auto"><option>PRJ-2024-001: Reduksi Downtime</option><option>PRJ-2024-002: Optimasi QC</option></select>
+    <button class="btn btn-primary" onclick="showToast('New analysis created')">+ New Analysis</button>
+  </div>
+</div>
+<div class="tab-bar">
+  ${tab('problemsolving','5why','5 Why Analysis',true)}
+  ${tab('problemsolving','fishbone','Fishbone Diagram',true)}
+  ${tab('problemsolving','pdca','PDCA Cycle',true)}
+</div>
+${curTab==='5why' ? render5Why() : curTab==='fishbone' ? renderFishbone() : renderPDCA()}`;
+}
+
+function render5Why() {
+  const whys = [
+    {q:'Why did the machine stop?', a:'Bearing overheated and seized'},
+    {q:'Why did the bearing overheat?', a:'Insufficient lubrication reaching the bearing'},
+    {q:'Why was there insufficient lubrication?', a:'Lubrication system nozzle was partially blocked'},
+    {q:'Why was the nozzle blocked?', a:'Contamination from metal filings entered lubrication lines'},
+    {q:'Why did metal filings enter the lubrication lines?', a:'Worn seal on the bearing housing not replaced during last maintenance'},
+  ];
+  return `
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">5 Why Analysis — Mesin Packing Line 3 Bearing Failure</div>
+      <div style="font-size:12px;color:var(--gray-500);margin-top:2px">Problem: Machine stopped unexpectedly causing 4-hour downtime · 2024-03-15 · Ahmad Rizky</div>
+    </div>
+    <div class="flex gap-2">${statusBadge('In Progress')}<button class="btn btn-secondary btn-sm">Export PDF</button></div>
+  </div>
+  <div class="card-body">
+    <div class="alert alert-info">Starting Point: <strong>Machine packing line 3 stopped unexpectedly on March 15, 2024, causing 4 hours of downtime.</strong></div>
+    ${whys.map((w,i)=>`
+    <div class="why-row">
+      <div class="why-num">${i+1}</div>
+      <div class="why-content">
+        <div class="why-q">WHY ${i+1}: ${w.q}</div>
+        <div class="why-a">${w.a}</div>
+      </div>
+      <button class="btn btn-ghost btn-xs" onclick="editWhy(${i})">Edit</button>
+    </div>`).join('')}
+    <div style="background:var(--green-light);border-radius:10px;padding:16px;margin-top:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px">ROOT CAUSE IDENTIFIED</div>
+      <div style="font-size:14px;font-weight:600;color:var(--gray-800)">Worn seal on bearing housing was not included in the preventive maintenance checklist, allowing metal contamination into lubrication system.</div>
+    </div>
+    <div style="margin-top:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--gray-600);margin-bottom:8px">CORRECTIVE ACTIONS</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${['Add bearing seal inspection to PM checklist','Install lubrication line strainer/filter','Replace all worn seals on active machines','Train maintenance on seal inspection criteria'].map((a,i)=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:white;border:1px solid var(--gray-200);border-radius:8px">
+          <input type="checkbox" ${i<2?'checked':''}>
+          <span style="font-size:13px">${a}</span>
+          <button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="navigate('actions')">→ Action</button>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+function renderFishbone() {
+  const categories = {
+    'Machine': ['Old bearing seal','No automatic lubrication','Insufficient PM frequency'],
+    'Method': ['PM checklist incomplete','No vibration monitoring','Poor lubrication procedure'],
+    'Material': ['Metal contamination','Oil quality degraded','Incorrect grease type'],
+    'Man': ['PM skills gap','No inspection checklist','Supervisor not checking'],
+    'Measurement': ['No vibration sensor','No temp monitoring','No lubrication log'],
+    'Environment': ['High ambient temp','Dusty environment','Vibration from nearby press'],
+  };
+  return `
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Fishbone (Ishikawa) Diagram — Mesin Packing Bearing Failure</div>
+    <div class="flex gap-2"><button class="btn btn-secondary btn-sm">Edit Causes</button><button class="btn btn-secondary btn-sm">Export</button></div>
+  </div>
+  <div class="card-body">
+    <div class="fishbone">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+        <div style="flex:1;height:3px;background:var(--gray-400)"></div>
+        <div style="background:var(--red);color:white;padding:12px 20px;border-radius:8px;font-weight:700;font-size:13px;min-width:160px;text-align:center">
+          PROBLEM<br><span style="font-size:11px;font-weight:400">Bearing Failure<br>= 4hr Downtime</span>
+        </div>
+      </div>
+      <div class="fishbone-bones">
+        ${Object.entries(categories).map(([cat,causes])=>`
+        <div class="fishbone-bone">
+          <div class="fishbone-bone-title">⚙ ${cat}</div>
+          ${causes.map(c=>`<div class="fishbone-cause">• ${c}</div>`).join('')}
+          <button class="btn btn-ghost btn-xs" style="margin-top:8px" onclick="addCause('${cat}')">+ Add</button>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="alert alert-info mt-4">ℹ Fishbone diagram is interactive. Click causes to edit or delete, and use "+ Add" to add new causes to each category.</div>
+  </div>
+</div>`;
+}
+
+function renderPDCA() {
+  return `
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">PDCA Cycle — PRJ-2024-001: Reduksi Downtime Mesin Packing</div>
+    <div class="flex gap-2">${statusBadge('In Progress')}<button class="btn btn-secondary btn-sm">Export</button></div>
+  </div>
+  <div class="card-body">
+    <div class="pdca-grid">
+      <div class="pdca-card pdca-p">
+        <div class="pdca-label">P</div>
+        <div class="pdca-title">Plan</div>
+        <textarea class="form-control" rows="5" style="background:rgba(255,255,255,0.6)">
+PROBLEM: Mesin packing line 3 sering breakdown tidak terencana, OEE di bawah 70%.
+
+ROOT CAUSE: PM checklist tidak mencakup inspeksi seal bearing, tidak ada monitoring getaran.
+
+TARGET: Tingkatkan OEE dari 68% ke 85% dalam 6 bulan.
+
+PLAN:
+1. Revisi PM checklist (termasuk seal bearing)
+2. Install sensor getaran
+3. Training operator
+4. Buat jadwal lubrication periodik</textarea>
+      </div>
+      <div class="pdca-card pdca-d">
+        <div class="pdca-label">D</div>
+        <div class="pdca-title">Do</div>
+        <textarea class="form-control" rows="5" style="background:rgba(255,255,255,0.6)">
+ACTIONS TAKEN:
+✓ PM checklist direvisi (Jan 2024)
+✓ Training PM untuk 8 teknisi (Feb 2024)
+✓ Install 3 sensor getaran di mesin kritikal
+✓ Jadwal lubrication mingguan dimulai
+
+IN PROGRESS:
+→ Piloting sensor monitoring di Plant A
+→ Procurement spare parts buffer stock</textarea>
+      </div>
+      <div class="pdca-card pdca-c">
+        <div class="pdca-label">C</div>
+        <div class="pdca-title">Check</div>
+        <textarea class="form-control" rows="5" style="background:rgba(255,255,255,0.6)">
+MEASUREMENT RESULTS (Mar 2024):
+
+OEE: 68% → 78.4% ✓ Progres baik
+Downtime: 42 hrs → 18 hrs ✓ -57%
+MTTR: 5.5 hrs → 3.1 hrs ✓ -44%
+PM Coverage: 35% → 82% ✓ Sangat baik
+
+GAP: Target OEE 85% belum tercapai.
+Perlu akselerasi di area machine availability.</textarea>
+      </div>
+      <div class="pdca-card pdca-a">
+        <div class="pdca-label">A</div>
+        <div class="pdca-title">Act</div>
+        <textarea class="form-control" rows="5" style="background:rgba(255,255,255,0.6)">
+STANDARDIZATION:
+→ PM checklist baru dijadikan standar untuk semua line
+→ Sensor monitoring akan di-rollout ke 5 mesin tambahan
+
+NEXT CYCLE:
+→ Fokus pada Machine Availability (saat ini 88%, target 95%)
+→ Implementasi SMED untuk reduce changeover time
+→ Review buffer stock policy untuk spare part kritikal</textarea>
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+function editWhy(i) { showToast(`Editing Why #${i+1}...`); }
+function addCause(cat) { showToast(`Adding cause to ${cat}...`); }
+
+// ============================================================
+// BENEFITS
+// ============================================================
+function renderBenefits() {
+  const totalEst = state.benefits.reduce((s,b)=>s+b.estimated,0);
+  const totalReal = state.benefits.reduce((s,b)=>s+b.realized,0);
+  const totalVerif = state.benefits.reduce((s,b)=>s+b.verified,0);
+  return `
+<div class="page-header">
+  <div><div class="page-title">Benefits & Cost Saving</div><div class="page-sub">Track estimated, realized, and verified benefits</div></div>
+  <button class="btn btn-primary" onclick="openBenefitModal()">+ Add Benefit</button>
+</div>
+<div class="alert alert-warning">⚠ <strong>Important:</strong> Benefit calculations must use agreed methods and supporting evidence. Cash benefits from time/defect reduction require verified methodology.</div>
+<div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+  <div class="stat-card">
+    <div class="stat-label">Total Estimated</div>
+    <div class="stat-value" style="font-size:20px;color:var(--gray-600)">${fmtIDR(totalEst)}</div>
+    <div class="stat-sub">Projected benefit from all projects</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Realized</div>
+    <div class="stat-value" style="font-size:20px;color:var(--blue)">${fmtIDR(totalReal)}</div>
+    <div class="stat-sub">Actual benefit achieved</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Verified</div>
+    <div class="stat-value" style="font-size:20px;color:var(--green)">${fmtIDR(totalVerif)}</div>
+    <div class="stat-sub">Audited and confirmed benefit</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title">Benefit Records</div></div>
+  <div class="table-wrap" style="border:none;border-radius:0">
+    <table>
+      <thead><tr><th>Project</th><th>Type</th><th>Category</th><th>Method</th><th>Baseline</th><th>After</th><th>Estimated</th><th>Realized</th><th>Verified</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${state.benefits.map(b=>`<tr>
+          <td><span style="font-family:monospace;font-size:11px;color:var(--blue)">${b.project}</span></td>
+          <td><span class="badge badge-purple">${b.type}</span></td>
+          <td>${b.category}</td>
+          <td style="font-size:12px;max-width:120px;color:var(--gray-500)">${b.method}</td>
+          <td style="font-size:12px">${b.baseline}</td>
+          <td style="font-size:12px">${b.after}</td>
+          <td style="font-weight:600">${fmtIDR(b.estimated)}</td>
+          <td style="font-weight:600;color:var(--blue)">${fmtIDR(b.realized)}</td>
+          <td style="font-weight:600;color:var(--green)">${fmtIDR(b.verified)}</td>
+          <td>${statusBadge(b.status)}</td>
+          <td>
+            <div class="flex gap-2">
+              <button class="btn btn-secondary btn-xs" onclick="openBenefitDetail(${b.id})">Detail</button>
+              <button class="btn btn-ghost btn-xs" onclick="verifyBenefit(${b.id})">Verify</button>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+</div>`;
+}
+function openBenefitModal() {
+  openModal('Add Benefit Record',`
+    <div class="form-group"><label class="form-label">Project *</label>
+      <select class="form-control">${state.projects.map(p=>`<option>${p.id} - ${p.name.substring(0,40)}</option>`).join('')}</select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Benefit Type</label>
+        <select class="form-control"><option>Cost Saving</option><option>Productivity</option><option>Quality</option><option>Safety</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <input class="form-control" placeholder="e.g. Maintenance Cost, Labor Efficiency"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Baseline</label><input class="form-control" placeholder="e.g. IDR 580jt/thn, 4 jam/batch"></div>
+      <div class="form-group"><label class="form-label">After Improvement</label><input class="form-control" placeholder="e.g. IDR 455jt/thn, 1.5 jam/batch"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Calculation Method</label>
+      <textarea class="form-control" rows="2" placeholder="Describe how the benefit was calculated..."></textarea>
+    </div>
+    <div class="form-group"><label class="form-label">Estimated Benefit (IDR) *</label>
+      <input type="number" class="form-control" placeholder="e.g. 100000000"></div>
+    <div class="form-group"><label class="form-label">Assumptions</label>
+      <textarea class="form-control" rows="2" placeholder="List key assumptions in the calculation..."></textarea>
+    </div>
+  `,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();showToast('Benefit record added')">Save</button>`,true);
+}
+function openBenefitDetail(id) {
+  const b = state.benefits.find(x=>x.id===id);
+  if(!b) return;
+  openModal(`Benefit Detail — ${b.project}`,`
+    <div class="form-row-3">
+      <div class="benefit-metric"><div class="benefit-metric-label">Estimated</div><div class="benefit-metric-value" style="font-size:18px;color:var(--gray-700)">${fmtIDR(b.estimated)}</div></div>
+      <div class="benefit-metric"><div class="benefit-metric-label">Realized</div><div class="benefit-metric-value" style="font-size:18px;color:var(--blue)">${fmtIDR(b.realized)}</div></div>
+      <div class="benefit-metric"><div class="benefit-metric-label">Verified</div><div class="benefit-metric-value" style="font-size:18px;color:var(--green)">${fmtIDR(b.verified)}</div></div>
+    </div>
+    <div style="margin-top:16px">
+      <div class="form-label">Method</div><p style="font-size:13px;color:var(--gray-700)">${b.method}</p>
+      <div class="form-label" style="margin-top:12px">Baseline → After</div>
+      <p style="font-size:13px">${b.baseline} <strong>→</strong> ${b.after}</p>
+      <div class="form-label" style="margin-top:12px">Evidence</div>
+      <p style="font-size:13px;color:var(--gray-600)">${b.evidence}</p>
+      <div class="form-label" style="margin-top:12px">Status</div>
+      ${statusBadge(b.status)}
+    </div>
+  `,`<button class="btn btn-secondary" onclick="closeModal()">Close</button>${b.status!=='Verified'?`<button class="btn btn-primary" onclick="verifyBenefit(${b.id});closeModal()">Request Verification</button>`:''}`,false);
+}
+function verifyBenefit(id) {
+  showToast(`Verification request sent for benefit #${id}`);
+}
+
+// ============================================================
+// DOCUMENTS
+// ============================================================
+function renderDocuments() {
+  return `
+<div class="page-header">
+  <div><div class="page-title">Document Center</div><div class="page-sub">Generate, manage, and approve project documents</div></div>
+  <div class="flex gap-2">
+    <button class="btn btn-secondary" onclick="openTemplateModal()">Manage Templates</button>
+    <button class="btn btn-primary" onclick="openGenerateDocModal()">+ Generate Document</button>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+  ${[
+    {label:'Total Documents',value:state.docs.length,color:'var(--gray-900)'},
+    {label:'Draft',value:state.docs.filter(d=>d.status==='Draft').length,color:'var(--gray-500)'},
+    {label:'In Review',value:state.docs.filter(d=>d.status==='In Review').length,color:'var(--yellow)'},
+    {label:'Approved',value:state.docs.filter(d=>d.status==='Approved').length,color:'var(--green)'},
+  ].map(s=>`<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value" style="color:${s.color}">${s.value}</div></div>`).join('')}
+</div>
+
+<div class="tab-bar">
+  ${tab('documents','docs','All Documents',true)}
+  ${tab('documents','templates','Templates',true)}
+</div>
+
+${(state.activeTab['documents']||'docs')==='docs' ? `
+<div class="flex gap-2 mb-4">
+  <div class="search-bar"><span>🔍</span><input placeholder="Search documents..."/></div>
+  <select class="form-control" style="width:auto"><option>All Types</option><option>Project Charter</option><option>Problem Analysis</option><option>Benefit Report</option><option>PDCA</option></select>
+  <select class="form-control" style="width:auto"><option>All Status</option><option>Draft</option><option>In Review</option><option>Approved</option></select>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px">
+  ${state.docs.map(d=>`
+  <div class="doc-card" onclick="openDocDetail('${d.id}')">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="font-size:32px">${d.icon}</div>
+      ${statusBadge(d.status)}
+    </div>
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--gray-900);margin-bottom:4px">${d.title}</div>
+      <div style="font-size:11px;color:var(--gray-500)">${d.id} · ${d.version} · ${d.type}</div>
+    </div>
+    <div style="border-top:1px solid var(--gray-100);padding-top:10px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:11px;color:var(--gray-400)">${d.created}</span>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();downloadDoc('${d.id}')">⬇ DOCX</button>
+        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();downloadDoc('${d.id}','pdf')">⬇ PDF</button>
+      </div>
+    </div>
+  </div>`).join('')}
+</div>` : `
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">
+  ${[
+    {icon:'📋',name:'Project Charter',desc:'Standard project initiation document with objectives, scope, team, and timeline.'},
+    {icon:'🔍',name:'5 Why Report',desc:'Root cause analysis report with problem statement, analysis chain, and corrective actions.'},
+    {icon:'🐟',name:'Fishbone Analysis',desc:'Ishikawa diagram with cause categories and sub-causes.'},
+    {icon:'🔄',name:'PDCA Report',desc:'Plan-Do-Check-Act cycle documentation for improvement projects.'},
+    {icon:'💰',name:'Benefit Report',desc:'Cost saving and benefit realization report with baseline, actuals, and verification.'},
+    {icon:'📊',name:'KPI Summary',desc:'Period KPI performance summary by department with trend analysis.'},
+  ].map(t=>`
+  <div class="doc-card">
+    <div style="font-size:36px">${t.icon}</div>
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--gray-900);margin-bottom:4px">${t.name}</div>
+      <div style="font-size:12px;color:var(--gray-500)">${t.desc}</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="openGenerateDocModal('${t.name}')">Generate Document</button>
+  </div>`).join('')}
+</div>`}`;
+}
+
+function openGenerateDocModal(type='') {
+  openModal('Generate Document',`
+    <div class="form-group"><label class="form-label">Document Type *</label>
+      <select class="form-control">
+        <option ${type==='Project Charter'?'selected':''}>Project Charter</option>
+        <option ${type==='5 Why Report'?'selected':''}>5 Why Report</option>
+        <option ${type==='Fishbone Analysis'?'selected':''}>Fishbone Analysis</option>
+        <option ${type==='PDCA Report'?'selected':''}>PDCA Report</option>
+        <option ${type==='Benefit Report'?'selected':''}>Benefit Report</option>
+        <option ${type==='KPI Summary'?'selected':''}>KPI Summary</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Project *</label>
+      <select class="form-control">${state.projects.map(p=>`<option>${p.id} — ${p.name.substring(0,40)}</option>`).join('')}</select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Document Number</label><input class="form-control" value="DOC-2024-005" readonly></div>
+      <div class="form-group"><label class="form-label">Version</label><input class="form-control" value="v1.0"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Output Format</label>
+      <div style="display:flex;gap:12px;margin-top:4px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" checked> DOCX</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" checked> PDF</label>
+      </div>
+    </div>
+    <div class="alert alert-info">ℹ Document will be generated from a template with current project data as a snapshot. Data changes after generation will not affect this document.</div>
+  `,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="generateDoc()">Generate Document</button>`,true);
+}
+function openTemplateModal() { showToast('Opening template manager...'); }
+function openDocDetail(id) { showToast(`Opening ${id}...`); }
+function downloadDoc(id, fmt='docx') { showToast(`Downloading ${id}.${fmt}...`); }
+function generateDoc() { closeModal(); showToast('Document generated: DOC-2024-005 v1.0 (DOCX + PDF)'); }
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+function renderAuditLog() {
+  return `
+<div class="page-header">
+  <div><div class="page-title">Audit Log</div><div class="page-sub">System activity and change history</div></div>
+  <button class="btn btn-secondary">Export Log</button>
+</div>
+<div class="flex gap-2 mb-4">
+  <div class="search-bar"><span>🔍</span><input placeholder="Search log..."/></div>
+  <select class="form-control" style="width:auto"><option>All Users</option>${DEMO_USERS.map(u=>`<option>${u.name}</option>`).join('')}</select>
+  <select class="form-control" style="width:auto"><option>All Actions</option><option>Create</option><option>Update</option><option>Delete</option><option>Login</option><option>Import</option></select>
+  <input type="date" class="form-control" style="width:auto" value="2024-04-01">
+</div>
+<div class="card">
+  <div class="card-body" style="padding:8px 20px">
+    ${DEMO_AUDIT.map(a=>`
+    <div class="audit-row">
+      <div class="audit-icon">${a.icon}</div>
+      <div class="audit-content">
+        <div class="audit-action">${a.action}</div>
+        <div class="audit-meta">${a.meta}</div>
+      </div>
+    </div>`).join('')}
+  </div>
+</div>`;
+}
+
+// ============================================================
+// USERS
+// ============================================================
+function renderUsers() {
+  return `
+<div class="page-header">
+  <div><div class="page-title">Users & Roles</div><div class="page-sub">Manage user access and permissions</div></div>
+  <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
+</div>
+<div class="tab-bar">
+  ${tab('users','users','Users',true)}
+  ${tab('users','roles','Roles & Permissions',true)}
+</div>
+${(state.activeTab['users']||'users')==='users' ? `
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+      ${DEMO_USERS.map(u=>`<tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="avatar" style="width:30px;height:30px;font-size:11px">${u.avatar}</div>
+            <span style="font-weight:600">${u.name}</span>
+          </div>
+        </td>
+        <td style="color:var(--gray-500);font-size:13px">${u.email}</td>
+        <td>${statusBadge(u.role==='Admin'?'High':u.role==='Manager'?'Medium':'Low')}<span style="margin-left:6px;font-size:13px">${u.role}</span></td>
+        <td><span class="badge badge-gray">${u.dept}</span></td>
+        <td><span class="badge badge-green">Active</span></td>
+        <td>
+          <div class="flex gap-2">
+            <button class="btn btn-secondary btn-xs" onclick="openUserModal(${u.id})">Edit</button>
+            <button class="btn btn-ghost btn-xs">Reset PW</button>
+            ${u.id!==1?`<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="showToast('User deactivated')">Deactivate</button>`:''}
+          </div>
+        </td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+</div>` : `
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Role</th><th>Description</th><th>Users</th><th>Dashboard</th><th>Projects</th><th>Import</th><th>Benefits</th><th>Admin</th></tr></thead>
+    <tbody>
+      ${[
+        ['Admin','Full system access',1,'✓ Full','✓ Full','✓ Full','✓ Full','✓ Full'],
+        ['Manager','Department management',1,'✓ Dept','✓ Edit','✓ View','✓ Edit','✗'],
+        ['Engineer','Create and edit own records',2,'✓ Own','✓ Edit','✓ Upload','✓ View','✗'],
+        ['Viewer','Read-only access',1,'✓ View','✓ View','✗','✓ View','✗'],
+      ].map(r=>`<tr>
+        <td style="font-weight:600">${r[0]}</td>
+        <td style="font-size:12px;color:var(--gray-500)">${r[1]}</td>
+        <td style="text-align:center">${r[2]}</td>
+        ${r.slice(3).map(c=>`<td style="text-align:center;font-size:13px;color:${c.startsWith('✓')?'var(--green)':'var(--red)'}">${c}</td>`).join('')}
+      </tr>`).join('')}
+    </tbody>
+  </table>
+</div>`}`;
+}
+function openUserModal(id) {
+  const u = id ? DEMO_USERS.find(x=>x.id===id) : null;
+  openModal(u?'Edit User':'Add User',`
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Full Name *</label><input class="form-control" value="${u?u.name:''}"></div>
+      <div class="form-group"><label class="form-label">Email *</label><input type="email" class="form-control" value="${u?u.email:''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Role *</label>
+        <select class="form-control"><option>Admin</option><option ${u&&u.role==='Manager'?'selected':''}>Manager</option><option ${u&&u.role==='Engineer'?'selected':''}>Engineer</option><option ${u&&u.role==='Viewer'?'selected':''}>Viewer</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Department *</label>
+        <select class="form-control">${DEMO_DEPARTMENTS.map(d=>`<option ${u&&u.dept===d?'selected':''}>${d}</option>`).join('')}</select>
+      </div>
+    </div>
+    ${!u?`<div class="form-group"><label class="form-label">Temporary Password *</label><input type="password" class="form-control" placeholder="User must change on first login"></div>`:''}
+    <div class="alert alert-info">ℹ Access permissions are determined by role. Role changes take effect immediately.</div>
+  `,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();showToast('User saved successfully')">Save User</button>`,true);
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function renderSettings() {
+  return `
+<div class="page-header">
+  <div><div class="page-title">System Settings</div><div class="page-sub">Application configuration and administration</div></div>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">General Settings</div></div>
+    <div class="card-body">
+      <div class="form-group"><label class="form-label">Company Name</label><input class="form-control" value="PT. Maju Bersama Industri"></div>
+      <div class="form-group"><label class="form-label">Default Currency</label><select class="form-control"><option>IDR — Indonesian Rupiah</option><option>USD — US Dollar</option></select></div>
+      <div class="form-group"><label class="form-label">Fiscal Year Start</label><select class="form-control"><option>January</option><option>April</option></select></div>
+      <div class="form-group"><label class="form-label">Timezone</label><select class="form-control"><option>Asia/Jakarta (WIB, UTC+7)</option></select></div>
+      <button class="btn btn-primary">Save Settings</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Notification Settings</div></div>
+    <div class="card-body">
+      ${[
+        ['Project status changes','email','checked'],
+        ['Action items overdue','email','checked'],
+        ['Import completed','in-app','checked'],
+        ['Benefit verification request','email','checked'],
+        ['Document approval needed','email','checked'],
+      ].map(([label,type,chk])=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)">
+        <div>
+          <div style="font-size:13px;font-weight:500">${label}</div>
+          <div style="font-size:11px;color:var(--gray-400)">via ${type}</div>
+        </div>
+        <input type="checkbox" ${chk} style="width:18px;height:18px">
+      </div>`).join('')}
+      <button class="btn btn-secondary mt-4">Save Notifications</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Department Master</div><button class="btn btn-primary btn-sm" onclick="showToast('Add department...')">+ Add</button></div>
+    <div class="card-body" style="padding:8px 20px">
+      ${DEMO_DEPARTMENTS.map(d=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gray-100)">
+        <span style="font-size:13px;font-weight:500">${d}</span>
+        <button class="btn btn-ghost btn-xs">Edit</button>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">System Information</div></div>
+    <div class="card-body">
+      ${[['Application','CIMS v1.0.0 (Demo)'],['Stack','Next.js · PostgreSQL · Prisma'],['Environment','Development / Demo'],['Last Backup','2024-04-01 02:00 WIB'],['Database Size','~45 MB (demo seed)'],['Active Users','5']].map(([l,v])=>`
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100)">
+        <span style="font-size:12px;color:var(--gray-500)">${l}</span>
+        <span style="font-size:13px;font-weight:500">${v}</span>
+      </div>`).join('')}
+      <div class="alert alert-warning mt-4">⚠ This is a demo environment. Data is seed/demo data only.</div>
+    </div>
+  </div>
+</div>`;
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type='success') {
+  const el = document.createElement('div');
+  el.style.cssText = `position:fixed;bottom:24px;right:24px;background:${type==='error'?'var(--red)':type==='warn'?'var(--yellow)':'var(--gray-900)'};color:white;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.2);max-width:360px;animation:slideIn 0.2s ease`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity 0.3s';setTimeout(()=>el.remove(),300)},3000);
+}
+
+// CSS animation
+const style = document.createElement('style');
+style.textContent = `@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}`;
+document.head.appendChild(style);
+
+
+// ============================================================
+// REALTIME CLOCK
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const timeEl = document.getElementById('clockTime');
+  const dateEl = document.getElementById('clockDate');
+  if (!timeEl || !dateEl) return;
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  timeEl.textContent = hh + ':' + mm + ':' + ss;
+  const dayName = days[now.getDay()];
+  const date = String(now.getDate()).padStart(2,'0');
+  const month = months[now.getMonth()];
+  const year = now.getFullYear();
+  dateEl.textContent = dayName + ', ' + date + ' ' + month + ' ' + year;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ============================================================
+// INIT
+// ============================================================
+navigate('dashboard');
+</script>
+</body>
+</html>
